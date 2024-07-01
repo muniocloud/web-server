@@ -3,6 +3,8 @@
 /node_modules
 /build
 
+db_root_password.txt
+db_password.txt
 # Logs
 logs
 *.log
