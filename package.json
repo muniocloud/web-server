@@ -22,6 +22,7 @@
     "migration:create": "knex migrate:make"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.11.2",
     "@google/generative-ai": "^0.14.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",

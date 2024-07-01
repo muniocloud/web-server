@@ -10,9 +10,12 @@ import {
   FunctionDeclarationSchemaType,
   GoogleGenerativeAI,
 } from '@google/generative-ai';
+import { UploadService } from 'src/upload/upload.service';
 
 @Controller('sessions')
 export class SessionsController {
+  constructor(private readonly uploadService: UploadService) {}
+
   fileToGenerativePart(file: Express.Multer.File) {
     return {
       inlineData: {
@@ -25,6 +28,12 @@ export class SessionsController {
   @Post('check')
   @UseInterceptors(FileInterceptor('file'))
   async checkMessage(@UploadedFile() file: Express.Multer.File) {
+    const result1 = await this.uploadService.upload({
+      buffer: file.buffer,
+      contentType: file.mimetype,
+      type: file.mimetype,
+    });
+    return result1;
     const genAI = new GoogleGenerativeAI(
       process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     );
