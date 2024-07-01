@@ -20,7 +20,20 @@ services:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 2s
       retries: 20
-
+  
+  storage:
+    build: 
+      context: .
+      dockerfile: Dockerfile.storage
+    image: fsouza/fake-gcs-server:1
+    command: -scheme http
+    ports:
+      - 4443:4443
+    networks:
+      - backend
+    volumes:
+      - storage:/data
+    
 secrets:
   db_password:
     file: db_password.txt
@@ -29,6 +42,7 @@ secrets:
 
 volumes:
     db_data:
+    storage:
 
 networks:
   backend:
