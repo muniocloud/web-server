@@ -1,4 +1,4 @@
-import { UploadInput, UploadProvider } from './upload.types';
+import { UploadProvider } from './upload.types';
 import { randomUUID } from 'crypto';
 import { Bucket, File, Storage, StorageOptions } from '@google-cloud/storage';
 import { ConfigService } from '@nestjs/config';
@@ -28,20 +28,23 @@ export class GCSProvider implements UploadProvider {
     return {};
   }
 
-  async upload({ buffer, contentType }: UploadInput) {
+  private createFileKey(customName: string = '') {
     const timestamp = Date.now();
-    const key = `${randomUUID().substring(0, 8)}${timestamp}`.replaceAll(
+    return `${randomUUID().substring(0, 8)}${timestamp}${customName}`.replaceAll(
       '-',
       '',
     );
-    const file = this.bucket.file(key);
+  }
 
-    await file.save(buffer, {
-      contentType,
+  async upload(file: Express.Multer.File, customName: string = '') {
+    const cloudFile = this.bucket.file(this.createFileKey(customName));
+
+    await cloudFile.save(file.buffer, {
+      contentType: file.mimetype,
       private: false,
     });
 
-    return this.getFileUrl(file);
+    return this.getFileUrl(cloudFile);
   }
 
   private getFileUrl(file: File) {

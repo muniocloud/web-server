@@ -7,6 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     });
 
     table.string('name', 255);
+    table.string('avatar_url', 2048);
     table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
     table.timestamp('updated_at');
     table.timestamp('deleted_at');

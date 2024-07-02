@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FILE_UPLOAD_PROVIDER } from './upload.contants';
-import { UploadInput, UploadProvider } from './upload.types';
+import { UploadProvider } from './upload.types';
 
 @Injectable()
 export class UploadService {
@@ -9,7 +9,7 @@ export class UploadService {
     private uploader: UploadProvider,
   ) {}
 
-  async upload(input: UploadInput) {
-    return this.uploader.upload(input);
+  async upload(file: Express.Multer.File, customName: string = '') {
+    return this.uploader.upload(file, customName);
   }
 }

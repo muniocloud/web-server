@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
       primaryKey: true,
     });
     table.integer('user_id').unsigned().notNullable().references('user.id');
-    table.string('email', 320).notNullable();
+    table.string('email', 320).notNullable().unique();
     table.enum('provider', ['local', 'google']).notNullable();
     table.string('provider_id', 255);
     table.string('password', 255);

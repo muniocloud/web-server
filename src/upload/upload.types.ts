@@ -5,5 +5,5 @@ export type UploadInput = {
 };
 
 export interface UploadProvider {
-  upload: (input: UploadInput) => Promise<string>;
+  upload: (file: Express.Multer.File, customName?: string) => Promise<string>;
 }

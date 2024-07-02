@@ -28,14 +28,10 @@ export class SessionsController {
   @Post('check')
   @UseInterceptors(FileInterceptor('file'))
   async checkMessage(@UploadedFile() file: Express.Multer.File) {
-    const result1 = await this.uploadService.upload({
-      buffer: file.buffer,
-      contentType: file.mimetype,
-      type: file.mimetype,
-    });
+    const result1 = await this.uploadService.upload(file);
     return result1;
     const genAI = new GoogleGenerativeAI(
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? '',
     );
     const systemInstruction =
       'You are a english teacher and asked to user to pronunciate the phrase "Good morning". The user reponds in the audio bellow. Check their speaking and pronunciation and send feedbacks to improve. Follow the response schema, put your feedback on feedback property and user rating on rating property. The rating is based on 10, where 0 is very bad and 10 is very good.';
