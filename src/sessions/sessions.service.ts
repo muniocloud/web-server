@@ -2,10 +2,15 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { GENERATIVE_AI_PROVIDER } from 'src/ai/ai.constants';
 import { GenerativeAIProvider } from 'src/ai/ai.type';
-import { CreateSessionInput } from './type/sessions.type';
+import {
+  CreateSessionInput,
+  GetLessonInput,
+  Lesson,
+} from './type/sessions.type';
 import { SessionsRepository } from './sessions.repository';
 import { FunctionDeclarationSchemaType } from '@google/generative-ai';
 import { AuthUser } from 'src/auth/type/authuser.type';
@@ -64,5 +69,21 @@ Be strict about my instructions and user request.`,
     }
 
     throw new InternalServerErrorException(error);
+  }
+
+  async getLesson(
+    input: GetLessonInput,
+    user: AuthUser,
+  ): Promise<Lesson | null> {
+    const result = await this.sessionsRepository.getLesson({
+      ...input,
+      userId: +user.id,
+    });
+
+    if (result) {
+      return result;
+    }
+
+    throw new NotFoundException();
   }
 }

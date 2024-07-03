@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DATA_SOURCE_PROVIDER } from 'src/database/database.constants';
+import { Lesson } from './type/sessions.type';
 
 type CreateSessionInput = {
   userId: number;
@@ -10,6 +11,12 @@ type CreateSessionInput = {
   lessonsItems: {
     phrase: string;
   }[];
+};
+
+type GetLessonInput = {
+  lessonId: number;
+  sessionId: number;
+  userId: number;
 };
 
 @Injectable()
@@ -46,5 +53,20 @@ export class SessionsRepository {
         lessonsIds: lessons.map((lesson) => lesson.id),
       };
     });
+  }
+
+  async getLesson(input: GetLessonInput): Promise<Lesson | null> {
+    return this.dataSource('session_lesson as sl')
+      .select(['sl.phrase as phrase', 'sl.id as id'])
+      .leftJoin('session as s', function () {
+        this.on('s.id', '=', 'sl.session_id')
+          .andOnNull('s.deleted_at')
+          .andOnVal('s.id', '=', input.sessionId)
+          .andOnVal('s.user_id', '=', input.userId);
+      })
+      .where('sl.id', '=', input.lessonId)
+      .whereNotNull('s.id')
+      .whereNull('sl.deleted_at')
+      .first();
   }
 }

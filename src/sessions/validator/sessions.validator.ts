@@ -5,3 +5,10 @@ export const createSessionSchemaInput = z.object({
   lessons: z.number().min(2).max(10),
   context: z.enum(['routine', 'cinema']),
 });
+
+export const idSchema = z.coerce.number().nonnegative().min(1);
+
+export const getLessonSchemaInput = z.object({
+  sessionId: idSchema,
+  lessonId: idSchema,
+});

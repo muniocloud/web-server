@@ -1,6 +1,6 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
-import { createSessionSchemaInput } from './validator';
+import { createSessionSchemaInput, idSchema } from './validator';
 import { CreateSessionInput } from './type/sessions.type';
 import { User } from 'src/auth/decorator/authuser.decorator';
 import { AuthUser } from 'src/auth/type/authuser.type';
@@ -19,5 +19,21 @@ export class SessionsController {
     @User() user: AuthUser,
   ) {
     return this.sessionsService.createSession(input, user);
+  }
+
+  @Get(':session/lessons/:lesson')
+  @UseGuards(JwtAuthGuard)
+  async getLesson(
+    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
+    @Param('lesson', new ZodValidatorPipe(idSchema)) lessonId: number,
+    @User() user: AuthUser,
+  ) {
+    return this.sessionsService.getLesson(
+      {
+        lessonId,
+        sessionId,
+      },
+      user,
+    );
   }
 }
