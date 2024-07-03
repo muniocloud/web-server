@@ -5,7 +5,7 @@ import { zodValidate } from './zod-validate';
 export class ZodValidatorPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  transform(value: unknown) {
+  transform(value: any) {
     return zodValidate(value, this.schema);
   }
 }

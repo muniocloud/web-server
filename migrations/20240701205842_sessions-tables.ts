@@ -52,7 +52,7 @@ export async function up(knex: Knex): Promise<void> {
         .unsigned()
         .notNullable()
         .references('session.id');
-      table.string('feedback').notNullable();
+      table.text('feedback').notNullable();
       table.integer('rating').notNullable();
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('deleted_at');

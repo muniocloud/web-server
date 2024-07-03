@@ -15,6 +15,7 @@ import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
 import { signupInputSchemaValidator } from './validator';
 import { SignUpInput } from './type';
 import { JwtAuthGuard } from './guard/jwt.guard';
+import { avatarSchemaValidator } from './validator/avatar.validator';
 
 @Controller('auth')
 export class AuthController {
@@ -29,7 +30,8 @@ export class AuthController {
   @Post('signup')
   @UseInterceptors(FileInterceptor('avatar'))
   async signup(
-    @UploadedFile() avatar: Express.Multer.File,
+    @UploadedFile(new ZodValidatorPipe(avatarSchemaValidator))
+    avatar: Express.Multer.File,
     @Body(new ZodValidatorPipe(signupInputSchemaValidator)) input: SignUpInput,
   ) {
     return this.authService.createUser({

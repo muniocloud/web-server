@@ -1,11 +1,25 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
-import { createSessionSchemaInput, idSchema } from './validator';
+import {
+  audioFileSchemaValidator,
+  createSessionSchemaInput,
+  idSchema,
+} from './validator';
 import { CreateSessionInput } from './type/sessions.type';
 import { User } from 'src/auth/decorator/authuser.decorator';
 import { AuthUser } from 'src/auth/type/authuser.type';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { SessionsService } from './sessions.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('sessions')
 export class SessionsController {
@@ -35,5 +49,23 @@ export class SessionsController {
       },
       user,
     );
+  }
+
+  @Post(':session/lessons/:lesson')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('audio'))
+  async answerLesson(
+    @UploadedFile(new ZodValidatorPipe(audioFileSchemaValidator))
+    audio: Express.Multer.File,
+    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
+    @Param('lesson', new ZodValidatorPipe(idSchema)) lessonId: number,
+    @User() user: AuthUser,
+  ) {
+    return this.sessionsService.answerLesson({
+      audio,
+      lessonId,
+      sessionId,
+      user,
+    });
   }
 }
