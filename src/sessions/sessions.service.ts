@@ -111,8 +111,6 @@ Be strict about my instructions and user request.`,
       `answer-lesson-${lesson.id}`,
     );
 
-    console.log('phrase', lesson.phrase);
-
     const model = this.generativeAI.createGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: {
