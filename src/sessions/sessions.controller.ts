@@ -68,4 +68,16 @@ export class SessionsController {
       user,
     });
   }
+
+  @Get(':session/result')
+  @UseGuards(JwtAuthGuard)
+  async getSessionResult(
+    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
+    @User() user: AuthUser,
+  ) {
+    return this.sessionsService.createOrGetSessionResult({
+      sessionId,
+      user,
+    });
+  }
 }

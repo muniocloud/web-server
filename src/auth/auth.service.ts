@@ -31,7 +31,7 @@ export class AuthService {
 
       return {
         email,
-        id,
+        id: +id,
       };
     }
 

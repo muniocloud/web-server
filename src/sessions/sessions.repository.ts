@@ -1,36 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DATA_SOURCE_PROVIDER } from 'src/database/database.constants';
-import { Lesson } from './type/sessions.type';
-
-type CreateSessionInput = {
-  userId: number;
-  context: string;
-  lessons: number;
-  level: number;
-  lessonsItems: {
-    phrase: string;
-  }[];
-};
-
-type GetLessonInput = {
-  lessonId: number;
-  sessionId: number;
-  userId: number;
-};
-
-type AnswerLessonInput = {
-  audioUrl: string;
-  feedback: string;
-  rating: number;
-  lessonId: number;
-};
-
-type GetNextLessonInput = {
-  lessonId: number;
-  sessionId: number;
-  userId: number;
-};
+import { AwnseredLesson, Lesson, Session } from './type/sessions.type';
+import {
+  GetSessionInput,
+  GetNextLessonInput,
+  GetAnsweredLessonsInput,
+  CreateSessionInput,
+  GetLessonInput,
+  FinishSessionInput,
+  AnswerLessonInput,
+} from './dto/sessions.repository.dto';
 
 @Injectable()
 export class SessionsRepository {
@@ -83,6 +63,24 @@ export class SessionsRepository {
       .first();
   }
 
+  async getSession(input: GetSessionInput): Promise<Session | null> {
+    return this.dataSource('session')
+      .select([
+        'user_id as userId',
+        'id',
+        'status',
+        'lessons',
+        'level',
+        'context',
+        'feedback',
+        'rating',
+      ])
+      .where('id', '=', input.sessionId)
+      .where('user_id', '=', input.userId)
+      .whereNull('deleted_at')
+      .first();
+  }
+
   async createLessonAnswer(input: AnswerLessonInput) {
     return this.dataSource.transaction(async function (transaction) {
       await transaction('session_lesson_response')
@@ -116,5 +114,38 @@ export class SessionsRepository {
       .whereNotNull('s.id')
       .whereNull('sl.deleted_at')
       .first();
+  }
+
+  async getAnsweredLessons(
+    input: GetAnsweredLessonsInput,
+  ): Promise<AwnseredLesson[] | null> {
+    return this.dataSource('session_lesson_response as slr')
+      .select('slr.lesson_id', 'slr.feedback', 'slr.rating')
+      .leftJoin('session_lesson as sl', function () {
+        this.on('slr.lesson_id', '=', 'sl.id')
+          .andOnNull('sl.deleted_at')
+          .andOnVal('sl.session_id', input.sessionId);
+      })
+      .leftJoin('session as s', function () {
+        this.on('sl.session_id', '=', 's.id').andOnVal(
+          's.user_id',
+          input.userId,
+        );
+      })
+      .whereNull('slr.deleted_at')
+      .whereNotNull('sl.id')
+      .whereNotNull('sl.id');
+  }
+
+  async finishSession(input: FinishSessionInput) {
+    return this.dataSource('session')
+      .update({
+        feedback: input.feedback,
+        rating: input.rating,
+        status: 'finished',
+        updated_at: this.dataSource.fn.now(),
+      })
+      .where('id', '=', input.sessionId)
+      .andWhere('user_id', '=', input.userId);
   }
 }

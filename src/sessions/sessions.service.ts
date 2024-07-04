@@ -1,4 +1,6 @@
 import {
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -20,14 +22,14 @@ import { AuthUser } from 'src/auth/type/authuser.type';
 import { phrasesShema } from './validator/generative.validator';
 import { SESSION_LEVEL } from './sessions.constants';
 import { UploadService } from 'src/upload/upload.service';
-import { generativeResponseSchemaValidator } from './validator';
-
-export type AnswerLessonInput = {
-  audio: Express.Multer.File;
-  lessonId: number;
-  sessionId: number;
-  user: AuthUser;
-};
+import {
+  generativeResponseFeedbackOverallSchemaValidator,
+  generativeResponseFeedbackSchemaValidator,
+} from './validator';
+import {
+  AnswerLessonInput,
+  CreateSessionResultInput,
+} from './dto/sessions.dto';
 
 @Injectable()
 export class SessionsService {
@@ -143,7 +145,7 @@ Be strict about my instructions and user request.`,
 
     const response = request.response.text();
     const { data, success, error } =
-      generativeResponseSchemaValidator.safeParse(JSON.parse(response));
+      generativeResponseFeedbackSchemaValidator.safeParse(JSON.parse(response));
 
     if (!success) {
       throw new InternalServerErrorException(error);
@@ -157,7 +159,6 @@ Be strict about my instructions and user request.`,
     });
 
     const nextLesson = await this.sessionsRepository.getNextLesson({
-      lessonId,
       sessionId,
       userId: +user.id,
     });
@@ -166,6 +167,88 @@ Be strict about my instructions and user request.`,
       rating: data.rating,
       feedback: data.feedback,
       nextLessonId: nextLesson?.id ?? null,
+    };
+  }
+
+  async createOrGetSessionResult({
+    sessionId,
+    user,
+  }: CreateSessionResultInput) {
+    const session = await this.sessionsRepository.getSession({
+      sessionId,
+      userId: user.id,
+    });
+
+    if (!session) {
+      throw new NotFoundException('Session not found.');
+    }
+
+    if (session.status === 'finished') {
+      return {
+        feedback: session.feedback,
+        rating: session.rating,
+      };
+    }
+
+    const awnseredLessons = await this.sessionsRepository.getAnsweredLessons({
+      sessionId,
+      userId: user.id,
+    });
+
+    if (session.lessons !== awnseredLessons?.length) {
+      throw new HttpException(
+        'There are some lessons to complete before get results.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const model = this.generativeAI.createGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseMimeType: 'text/plain',
+        responseSchema: {
+          type: FunctionDeclarationSchemaType.STRING,
+          example:
+            'Your speaking and pronunciation is good, on the lesson number 1, you are good, where need to improve the "d" emphasis... On lesson 2...',
+        },
+      },
+      systemInstruction: `You are an english teach and the user was answered ${session.lessons} lessons about "${session.context}" context and on level "${SESSION_LEVEL[session.level]}". For each lesson, you gave to him your feedback about your speaking and pronunciation.
+      Based on yours feedbacks, send to user a overall feedback.`,
+    });
+
+    const request = await model.generateContent([
+      'Feedbacks:',
+      ...awnseredLessons.map(
+        (lesson, index) => `${index}. "${lesson.feedback}""`,
+      ),
+    ]);
+
+    const response = request.response.text();
+
+    const {
+      data: feedback,
+      success,
+      error,
+    } = generativeResponseFeedbackOverallSchemaValidator.safeParse(response);
+
+    if (!success) {
+      throw new InternalServerErrorException(error);
+    }
+
+    const avgRating =
+      awnseredLessons.reduce((total, now) => now.rating + total, 0) /
+      awnseredLessons.length;
+
+    await this.sessionsRepository.finishSession({
+      feedback,
+      rating: avgRating,
+      sessionId,
+      userId: user.id,
+    });
+
+    return {
+      feedback,
+      rating: avgRating,
     };
   }
 }

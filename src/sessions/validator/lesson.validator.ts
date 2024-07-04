@@ -16,7 +16,9 @@ export const audioFileSchemaValidator = z
     message: 'Invalid file format. Allowed: audio/*',
   });
 
-export const generativeResponseSchemaValidator = z.object({
+export const generativeResponseFeedbackSchemaValidator = z.object({
   feedback: z.string(),
   rating: z.number().min(0).max(10),
 });
+
+export const generativeResponseFeedbackOverallSchemaValidator = z.string();

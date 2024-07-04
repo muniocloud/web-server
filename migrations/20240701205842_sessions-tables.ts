@@ -12,6 +12,8 @@ export async function up(knex: Knex): Promise<void> {
       table.string('context', 320).notNullable();
       table.integer('lessons').notNullable();
       table.integer('level').notNullable();
+      table.text('feedback');
+      table.integer('rating');
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('deleted_at');
     })
@@ -38,7 +40,7 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable()
         .references('session_lesson.id');
       table.string('response_url', 2048).notNullable();
-      table.string('feedback').notNullable();
+      table.text('feedback').notNullable();
       table.integer('rating').notNullable();
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('deleted_at');
