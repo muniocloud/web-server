@@ -28,6 +28,7 @@ import {
   CreateSessionInput,
   GetLessonInput,
   GetUserSessionsInput,
+  GetUserSessionInput,
 } from './dto/sessions.dto';
 
 @Injectable()
@@ -262,6 +263,23 @@ Be strict about my instructions and user request.`,
         userId: undefined,
         level: SESSION_LEVEL[session.level],
       }));
+    }
+
+    throw new NotFoundException();
+  }
+
+  async getUserSession(
+    input: GetUserSessionInput,
+  ): Promise<Omit<Session, 'userId'>> {
+    const result = await this.sessionsRepository.getUserSession(input);
+
+    if (result) {
+      const { userId: _, ...rest } = result;
+
+      return {
+        ...rest,
+        level: SESSION_LEVEL[result.level],
+      };
     }
 
     throw new NotFoundException();
