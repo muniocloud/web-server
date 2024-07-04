@@ -251,7 +251,9 @@ Be strict about my instructions and user request.`,
     };
   }
 
-  async getUserSessions(input: GetUserSessionsInput): Promise<Omit<Session, 'userId'>[]> {
+  async getUserSessions(
+    input: GetUserSessionsInput,
+  ): Promise<Omit<Session, 'userId'>[]> {
     const result = await this.sessionsRepository.getUserSessions(input);
 
     if (result?.length) {
