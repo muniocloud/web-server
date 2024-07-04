@@ -14,12 +14,12 @@ import {
   createSessionSchemaInput,
   idSchema,
 } from './validator';
-import { CreateSessionInput } from './type/sessions.type';
 import { User } from 'src/auth/decorator/authuser.decorator';
 import { AuthUser } from 'src/auth/type/authuser.type';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 import { SessionsService } from './sessions.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateSessionInput } from './dto/sessions.dto';
 
 @Controller('sessions')
 export class SessionsController {
@@ -78,6 +78,14 @@ export class SessionsController {
     return this.sessionsService.createOrGetSessionResult({
       sessionId,
       user,
+    });
+  }
+
+  @Get('')
+  @UseGuards(JwtAuthGuard)
+  async getUserSessions(@User() user: AuthUser) {
+    return this.sessionsService.getUserSessions({
+      userId: user.id,
     });
   }
 }

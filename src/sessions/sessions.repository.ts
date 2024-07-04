@@ -11,6 +11,7 @@ import {
   FinishSessionInput,
   AnswerLessonInput,
 } from './dto/sessions.repository.dto';
+import { GetUserSessionsInput } from './dto/sessions.dto';
 
 @Injectable()
 export class SessionsRepository {
@@ -61,6 +62,24 @@ export class SessionsRepository {
       .whereNotNull('s.id')
       .whereNull('sl.deleted_at')
       .first();
+  }
+
+  async getUserSessions(
+    input: GetUserSessionsInput,
+  ): Promise<Session[] | null> {
+    return this.dataSource('session')
+      .select([
+        'user_id as userId',
+        'id',
+        'status',
+        'feedback',
+        'rating',
+        'lessons',
+        'level',
+        'context',
+      ])
+      .where('user_id', '=', input.userId)
+      .whereNull('deleted_at');
   }
 
   async getSession(input: GetSessionInput): Promise<Session | null> {

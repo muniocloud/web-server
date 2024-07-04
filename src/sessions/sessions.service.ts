@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { GENERATIVE_AI_PROVIDER } from 'src/ai/ai.constants';
 import { GenerativeAIProvider } from 'src/ai/ai.type';
-import {
-  CreateSessionInput,
-  GetLessonInput,
-  Lesson,
-} from './type/sessions.type';
+import { Lesson, Session } from './type/sessions.type';
 import { SessionsRepository } from './sessions.repository';
 import {
   FunctionDeclarationSchema,
@@ -29,6 +25,9 @@ import {
 import {
   AnswerLessonInput,
   CreateSessionResultInput,
+  CreateSessionInput,
+  GetLessonInput,
+  GetUserSessionsInput,
 } from './dto/sessions.dto';
 
 @Injectable()
@@ -250,5 +249,19 @@ Be strict about my instructions and user request.`,
       feedback,
       rating: avgRating,
     };
+  }
+
+  async getUserSessions(input: GetUserSessionsInput): Promise<Omit<Session, 'userId'>[]> {
+    const result = await this.sessionsRepository.getUserSessions(input);
+
+    if (result?.length) {
+      return result.map((session) => ({
+        ...session,
+        userId: undefined,
+        level: SESSION_LEVEL[session.level],
+      }));
+    }
+
+    throw new NotFoundException();
   }
 }
