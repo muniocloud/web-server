@@ -3,6 +3,7 @@ import { CreateUserInput } from './user.dto';
 import { UserRepository } from './user.repository';
 import { UploadService } from 'src/upload/upload.service';
 import { Knex } from 'knex';
+import { JWTUser } from 'src/auth/type';
 
 @Injectable()
 export class UserService {
@@ -30,5 +31,9 @@ export class UserService {
     );
 
     return id;
+  }
+
+  async getUser(user: JWTUser) {
+    return this.userRepository.getUser(user.id);
   }
 }

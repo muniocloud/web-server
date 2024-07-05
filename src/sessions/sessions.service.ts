@@ -14,7 +14,6 @@ import {
   FunctionDeclarationSchema,
   FunctionDeclarationSchemaType,
 } from '@google/generative-ai';
-import { AuthUser } from 'src/auth/type/authuser.type';
 import { phrasesShema } from './validator/generative.validator';
 import { SESSION_LEVEL } from './sessions.constants';
 import { UploadService } from 'src/upload/upload.service';
@@ -29,7 +28,8 @@ import {
   GetLessonInput,
   GetUserSessionsInput,
   GetUserSessionInput,
-} from './dto/sessions.dto';
+  SessionsContext,
+} from './dto/sessions.service.dto';
 
 @Injectable()
 export class SessionsService {
@@ -40,7 +40,7 @@ export class SessionsService {
     private readonly uploadService: UploadService,
   ) {}
 
-  async createSession(input: CreateSessionInput, user: AuthUser) {
+  async createSession(input: CreateSessionInput, { user }: SessionsContext) {
     const level = SESSION_LEVEL[input.level];
     const model = this.generativeAI.createGenerativeModel({
       model: 'gemini-1.5-flash',
@@ -116,10 +116,13 @@ Be strict about my instructions and user request.`,
     return lastError;
   }
 
-  async getLesson(input: GetLessonInput, user: AuthUser): Promise<Lesson> {
+  async getLesson(
+    input: GetLessonInput,
+    { user }: SessionsContext,
+  ): Promise<Lesson> {
     const result = await this.sessionsRepository.getLesson({
       ...input,
-      userId: +user.id,
+      userId: user.id,
     });
 
     if (result) {
@@ -129,13 +132,16 @@ Be strict about my instructions and user request.`,
     throw new NotFoundException();
   }
 
-  async answerLesson({ sessionId, lessonId, user, audio }: AnswerLessonInput) {
+  async answerLesson(
+    { sessionId, lessonId, audio }: AnswerLessonInput,
+    context: SessionsContext,
+  ) {
     const lesson = await this.getLesson(
       {
         lessonId,
         sessionId,
       },
-      user,
+      context,
     );
 
     const url = await this.uploadService.upload(
@@ -203,7 +209,7 @@ Be strict about my instructions and user request.`,
 
     const nextLesson = await this.sessionsRepository.getNextLesson({
       sessionId,
-      userId: +user.id,
+      userId: context.user.id,
     });
 
     return {
@@ -213,10 +219,10 @@ Be strict about my instructions and user request.`,
     };
   }
 
-  async createOrGetSessionResult({
-    sessionId,
-    user,
-  }: CreateSessionResultInput) {
+  async createOrGetSessionResult(
+    { sessionId }: CreateSessionResultInput,
+    { user }: SessionsContext,
+  ) {
     const session = await this.sessionsRepository.getSession({
       sessionId,
       userId: user.id,

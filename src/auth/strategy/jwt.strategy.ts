@@ -8,7 +8,7 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
+    configService: ConfigService,
     private authService: AuthService,
   ) {
     super({
@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const isValid = await this.authService.isValidJWTUser(payload);
 
     if (isValid) {
-      return { email: payload.email, userId: payload.id };
+      return { email: payload.email, id: payload.id };
     }
 
     return null;

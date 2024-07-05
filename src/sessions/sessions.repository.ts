@@ -11,7 +11,10 @@ import {
   FinishSessionInput,
   AnswerLessonInput,
 } from './dto/sessions.repository.dto';
-import { GetUserSessionInput, GetUserSessionsInput } from './dto/sessions.dto';
+import {
+  GetUserSessionInput,
+  GetUserSessionsInput,
+} from './dto/sessions.service.dto';
 
 @Injectable()
 export class SessionsRepository {
