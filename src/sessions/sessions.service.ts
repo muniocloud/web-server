@@ -304,17 +304,13 @@ Be strict about my instructions and user request.`,
   async getUserSessions(
     input: GetUserSessionsInput,
   ): Promise<Omit<Session, 'userId'>[]> {
-    const result = await this.sessionsRepository.getUserSessions(input);
+    const result = (await this.sessionsRepository.getUserSessions(input)) ?? [];
 
-    if (result?.length) {
-      return result.map((session) => ({
-        ...session,
-        userId: undefined,
-        level: SESSION_LEVEL[session.level],
-      }));
-    }
-
-    throw new NotFoundException();
+    return result.map((session) => ({
+      ...session,
+      userId: undefined,
+      level: SESSION_LEVEL[session.level],
+    }));
   }
 
   async getUserSession(

@@ -1,5 +1,5 @@
 export type User = {
   email: string;
-  id: string;
+  id: number;
   password: string;
 };

@@ -6,7 +6,6 @@ import {
   Body,
   UseInterceptors,
   UploadedFile,
-  Get,
 } from '@nestjs/common';
 import { LocalAuthGuard } from './guard';
 import { AuthService } from './auth.service';
@@ -14,7 +13,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
 import { signupInputSchemaValidator } from './validator';
 import { SignUpInput } from './type';
-import { JwtAuthGuard } from './guard/jwt.guard';
 import { avatarSchemaValidator } from './validator/avatar.validator';
 
 @Controller('auth')
@@ -34,15 +32,17 @@ export class AuthController {
     avatar: Express.Multer.File,
     @Body(new ZodValidatorPipe(signupInputSchemaValidator)) input: SignUpInput,
   ) {
-    return this.authService.createUser({
+    const authUser = await this.authService.createUser({
       ...input,
+      provider: 'local',
       avatar,
     });
-  }
 
-  @Get('profile')
-  @UseGuards(JwtAuthGuard)
-  async checkprof() {
-    return true;
+    const jwtToken = await this.authService.createJWTToken(authUser);
+
+    return {
+      success: true,
+      ...jwtToken,
+    };
   }
 }

@@ -14,4 +14,5 @@ export const avatarSchemaValidator = z
   })
   .refine((file) => file.mimetype.startsWith('image/'), {
     message: 'Invalid file format. Allowed: image/*',
-  });
+  })
+  .optional();
