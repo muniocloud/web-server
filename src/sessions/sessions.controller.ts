@@ -35,6 +35,38 @@ export class SessionsController {
     return this.sessionsService.createSession(input, user);
   }
 
+  @Get('')
+  @UseGuards(JwtAuthGuard)
+  async getUserSessions(@User() user: AuthUser) {
+    return this.sessionsService.getUserSessions({
+      userId: user.id,
+    });
+  }
+
+  @Get(':session')
+  @UseGuards(JwtAuthGuard)
+  async getSession(
+    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
+    @User() user: AuthUser,
+  ) {
+    return this.sessionsService.getUserSession({
+      sessionId,
+      userId: user.id,
+    });
+  }
+
+  @Get(':session/result')
+  @UseGuards(JwtAuthGuard)
+  async getSessionResult(
+    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
+    @User() user: AuthUser,
+  ) {
+    return this.sessionsService.createOrGetSessionResult({
+      sessionId,
+      user,
+    });
+  }
+
   @Get(':session/lessons/:lesson')
   @UseGuards(JwtAuthGuard)
   async getLesson(
@@ -66,38 +98,6 @@ export class SessionsController {
       lessonId,
       sessionId,
       user,
-    });
-  }
-
-  @Get(':session/result')
-  @UseGuards(JwtAuthGuard)
-  async getSessionResult(
-    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @User() user: AuthUser,
-  ) {
-    return this.sessionsService.createOrGetSessionResult({
-      sessionId,
-      user,
-    });
-  }
-
-  @Get('')
-  @UseGuards(JwtAuthGuard)
-  async getUserSessions(@User() user: AuthUser) {
-    return this.sessionsService.getUserSessions({
-      userId: user.id,
-    });
-  }
-
-  @Get(':session')
-  @UseGuards(JwtAuthGuard)
-  async getSession(
-    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @User() user: AuthUser,
-  ) {
-    return this.sessionsService.getUserSession({
-      sessionId,
-      userId: user.id,
     });
   }
 }
