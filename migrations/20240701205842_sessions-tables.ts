@@ -15,6 +15,7 @@ export async function up(knex: Knex): Promise<void> {
       table.text('feedback');
       table.integer('rating');
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+      table.timestamp('updated_at');
       table.timestamp('deleted_at');
     })
     .createTable('session_lesson', function (table) {
@@ -40,20 +41,6 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable()
         .references('session_lesson.id');
       table.string('response_url', 2048).notNullable();
-      table.text('feedback').notNullable();
-      table.integer('rating').notNullable();
-      table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
-      table.timestamp('deleted_at');
-    })
-    .createTable('session_report', function (table) {
-      table.increments('id', {
-        primaryKey: true,
-      });
-      table
-        .integer('session_id')
-        .unsigned()
-        .notNullable()
-        .references('session.id');
       table.text('feedback').notNullable();
       table.integer('rating').notNullable();
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());

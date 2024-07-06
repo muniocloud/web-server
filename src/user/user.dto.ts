@@ -5,5 +5,5 @@ export type CreateUserInput = {
 
 export type CreateUserRepositoryInput = {
   name: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 };

@@ -6,7 +6,7 @@ import {
   ModelParams,
   RequestOptions,
 } from '@google/generative-ai';
-import { GenerativeAIProvider } from './ai.type';
+import { GenerativeAIProvider } from './ai.types';
 
 export class GeminiProvider implements GenerativeAIProvider {
   private readonly genAI: GoogleGenerativeAI;

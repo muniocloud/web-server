@@ -16,7 +16,7 @@ export class UserService {
     input: CreateUserInput,
     transaction: Knex.Transaction,
   ): Promise<number> {
-    let avatarUrl = '';
+    let avatarUrl: string | null = null;
 
     if (input.avatar) {
       avatarUrl = await this.uploadService.upload(input.avatar, 'avatar');
