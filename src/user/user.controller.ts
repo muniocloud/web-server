@@ -10,7 +10,7 @@ export class UserController {
 
   @Get('')
   @UseGuards(JwtAuthGuard)
-  public getUser(@JWTUser() user: JWTUserType) {
+  public async getUser(@JWTUser() user: JWTUserType) {
     return this.userService.getUser(user);
   }
 }
