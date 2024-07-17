@@ -161,9 +161,10 @@ export class SessionsService {
       model,
     );
 
-    const avgRating =
+    const avgRating = +(
       awnseredLessons.reduce((total, now) => now.rating + total, 0) /
-      awnseredLessons.length;
+      awnseredLessons.length
+    ).toFixed(2);
 
     await this.sessionsRepository.finishSession({
       feedback: data,
