@@ -41,7 +41,6 @@ export class GCSProvider implements UploadProvider {
 
     await cloudFile.save(file.buffer, {
       contentType: file.mimetype,
-      public: true,
     });
 
     return this.getFileUrl(cloudFile);
