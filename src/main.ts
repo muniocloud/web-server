@@ -8,5 +8,7 @@ async function bootstrap() {
   });
   app.use(helmet());
   await app.listen(process.env.PORT || 3000);
+  const url = await app.getUrl();
+  console.log(`Listening on ${url}`);
 }
 bootstrap();

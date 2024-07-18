@@ -8,10 +8,13 @@ import { UserModule } from './user/user.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { AiModule } from './ai/ai.module';
 
+const NODE_ENV = process.env.NODE_ENV;
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: `${process.cwd()}/.env${NODE_ENV === 'production' ? '' : `.${NODE_ENV}`}`,
     }),
     DatabaseModule,
     UploadModule,
