@@ -1,0 +1,12 @@
+runtime: custom
+service: backend
+env: flex
+
+vpc_access_connector:
+ name: projects/munio-2/locations/us-central1/connectors/internal-services-connect
+
+handlers:
+
+- url: /.*
+  script: auto
+  secure: always

@@ -1,0 +1,9 @@
+dispatch:
+    - url: "www.munio.cloud/*"
+      service: default
+
+    - url: "munio.cloud/*"
+      service: default
+
+    - url: "api.munio.cloud/*"
+      service: backend
