@@ -1,35 +1,37 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  <a href="http://munio.cloud/" target="blank"><img src="docs/munio-logo.svg" width="200" alt="Munio Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+<p align="center">a virtual assistant that helps users improve their conversation skills through voice practice sessions</p>
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Munio is a virtual assistant that functions as a teacher of English to help users improve their conversation skills through voice practice sessions.
+
+Using the Gemini, Munio generates phrases for a section based on the information provided by the user. After this, the user responds to tasks in the section via audio, where the Gemini performs analyses, identifying improvements in pronunciation and speech to help the user get better each time.
+
+After completing the session, a final report is generated, highlighting areas where the user can improve their conversation skills.
+
+In addition to the virtual assistant provided by the Gemini, we also have a system for uploading and authenticating users.
+
+This is a public version of the back-end application and the front-end can be found here: [web-client](https://github.com/muniocloud/web-client).
 
 ## Installation
 
 ```bash
-$ npm install
+npm ci
+```
+
+## Running external services
+
+```bash
+docker compose up
+```
+
+## Installing migrations
+
+```bash
+npm run migration:up
 ```
 
 ## Running the app
@@ -45,29 +47,24 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Test
+## Application Structure Highlights
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- Phrase Generator: **Google Gemini Flash**
+- Audio recording analysis: **Google Gemini Flash**
+- Session analysis: **Google Gemini Flash**
+- Storage: **Google Cloud Storage**
+- Infrastructure: **Google Cloud Platform: Cloud SQL and App Engine**
+- Authentication: Passport
+- Validations: Zod
+- Query Builder: Knex
+- Database: MySQL
+- Framework: NestJS
 
 ## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- Author - [Gabriel Sena](https://gabrielsena.dev)
+- Website - [https://munio.cloud](https://munio.cloud/)
 
 ## License
 
-Nest is [MIT licensed](LICENSE).
+[MIT licensed](LICENSE).
