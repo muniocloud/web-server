@@ -38,17 +38,18 @@ npm run migration:up
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
 
 ## Application Structure Highlights
 
+- Frontend interface: **[web-client](https://github.com/muniocloud/web-client)**
 - Phrase Generator: **Google Gemini Flash**
 - Audio recording analysis: **Google Gemini Flash**
 - Session analysis: **Google Gemini Flash**
