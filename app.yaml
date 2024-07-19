@@ -6,6 +6,9 @@ instance_class: F1
 
 entrypoint: "npm run start:prod"
 
+automatic_scaling:
+  max_instances: 1
+
 vpc_access_connector:
  name: projects/munio-2/locations/us-central1/connectors/internal-services-connect
 
