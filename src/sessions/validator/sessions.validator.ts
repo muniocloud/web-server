@@ -14,7 +14,7 @@ export const createSessionSchemaInput = z.object({
     'social life',
     'health & wellness',
     'family life',
-    'dinning out',
+    'dining out',
   ]),
 });
 
