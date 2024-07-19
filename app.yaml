@@ -1,6 +1,10 @@
-runtime: custom
+runtime: nodejs20
+
 service: backend
-env: flex
+
+instance_class: F1
+
+entrypoint: "npm run start:prod"
 
 vpc_access_connector:
  name: projects/munio-2/locations/us-central1/connectors/internal-services-connect
