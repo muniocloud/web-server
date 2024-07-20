@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DATA_SOURCE_PROVIDER } from 'src/database/database.constants';
-import { AwnseredLesson, Lesson, Session } from './type/sessions.type';
+import {
+  AwnseredLesson,
+  Lesson,
+  LessonStatus,
+  Session,
+} from './type/sessions.type';
 import {
   GetSessionInput,
   GetNextLessonInput,
@@ -10,11 +15,9 @@ import {
   GetLessonInput,
   FinishSessionInput,
   AnswerLessonInput,
+  GetLessonsStatusInput,
 } from './dto/sessions.repository.dto';
-import {
-  GetUserSessionInput,
-  GetUserSessionsInput,
-} from './dto/sessions.service.dto';
+import { GetUserSessionsInput } from './dto/sessions.service.dto';
 
 @Injectable()
 export class SessionsRepository {
@@ -85,24 +88,6 @@ export class SessionsRepository {
       .whereNull('deleted_at');
   }
 
-  async getUserSession(input: GetUserSessionInput): Promise<Session | null> {
-    return this.dataSource('session')
-      .select([
-        'user_id as userId',
-        'id',
-        'status',
-        'feedback',
-        'rating',
-        'lessons',
-        'level',
-        'context',
-      ])
-      .where('id', '=', input.sessionId)
-      .where('user_id', '=', input.userId)
-      .whereNull('deleted_at')
-      .first();
-  }
-
   async getSession(input: GetSessionInput): Promise<Session | null> {
     return this.dataSource('session')
       .select([
@@ -119,6 +104,20 @@ export class SessionsRepository {
       .where('user_id', '=', input.userId)
       .whereNull('deleted_at')
       .first();
+  }
+
+  async getLessonsStatus(
+    input: GetLessonsStatusInput,
+  ): Promise<LessonStatus[] | null> {
+    return this.dataSource('session_lesson AS sl')
+      .select([
+        'sl.id AS id',
+        this.dataSource.raw('(slr.id IS NOT NULL) AS answered'),
+      ])
+      .leftJoin('session_lesson_response AS slr', function () {
+        this.on('slr.lesson_id', '=', 'sl.id').andOnNull('slr.deleted_at');
+      })
+      .where('sl.session_id', '=', input.sessionId);
   }
 
   async createLessonAnswer(input: AnswerLessonInput) {

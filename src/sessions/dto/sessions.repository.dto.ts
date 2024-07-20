@@ -19,6 +19,11 @@ export type GetSessionInput = {
   userId: number;
 };
 
+export type GetLessonsStatusInput = {
+  sessionId: number;
+  userId: number;
+};
+
 export type AnswerLessonInput = {
   audioUrl: string;
   feedback: string;

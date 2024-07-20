@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Lesson, Session } from './type/sessions.type';
+import { Lesson, LessonStatus, Session } from './type/sessions.type';
 import { SessionsRepository } from './sessions.repository';
 import { phrasesShema } from './validator/generative.validator';
 import { SESSION_LEVEL } from './sessions.constants';
@@ -19,10 +19,13 @@ import {
   CreateSessionInput,
   GetLessonInput,
   GetUserSessionsInput,
-  GetUserSessionInput,
   SessionsContext,
 } from './dto/sessions.service.dto';
 import { AiService } from 'src/ai/ai.service';
+import {
+  GetLessonsStatusInput,
+  GetSessionInput,
+} from './dto/sessions.repository.dto';
 
 @Injectable()
 export class SessionsService {
@@ -192,9 +195,9 @@ export class SessionsService {
   }
 
   async getUserSession(
-    input: GetUserSessionInput,
+    input: GetSessionInput,
   ): Promise<Omit<Session, 'userId'>> {
-    const result = await this.sessionsRepository.getUserSession(input);
+    const result = await this.sessionsRepository.getSession(input);
 
     if (result) {
       const { userId: _, ...rest } = result;
@@ -203,6 +206,21 @@ export class SessionsService {
         ...rest,
         level: SESSION_LEVEL[result.level],
       };
+    }
+
+    throw new NotFoundException();
+  }
+
+  async getLessonsStatus(
+    input: GetLessonsStatusInput,
+  ): Promise<LessonStatus[]> {
+    const result = await this.sessionsRepository.getLessonsStatus(input);
+
+    if (result?.length) {
+      return result.map(({ id, answered }) => ({
+        id,
+        answered: !!answered,
+      }));
     }
 
     throw new NotFoundException();

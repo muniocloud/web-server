@@ -23,8 +23,3 @@ export type GetLessonInput = z.infer<typeof getLessonSchemaInput>;
 export type GetUserSessionsInput = {
   userId: number;
 };
-
-export type GetUserSessionInput = {
-  userId: number;
-  sessionId: number;
-};

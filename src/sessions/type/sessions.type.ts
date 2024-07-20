@@ -3,6 +3,11 @@ export type Lesson = {
   id: number;
 };
 
+export type LessonStatus = {
+  id: number;
+  answered: boolean;
+};
+
 export type Session = {
   userId: number;
   id: number;

@@ -55,6 +55,18 @@ export class SessionsController {
     });
   }
 
+  @Get(':session/lessons/status')
+  @UseGuards(JwtAuthGuard)
+  async getLessonsStatus(
+    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
+    @JWTUser() user: JWTUserType,
+  ) {
+    return this.sessionsService.getLessonsStatus({
+      sessionId,
+      userId: user.id,
+    });
+  }
+
   @Get(':session/result')
   @UseGuards(JwtAuthGuard)
   async getSessionResult(
