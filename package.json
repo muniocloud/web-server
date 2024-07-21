@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "migration:up": "env-cmd -f .env knex migrate:latest",
+    "migration:up": "env-cmd -f .env.development knex migrate:latest",
+    "migration:up:prod": "env-cmd -f .env knex migrate:latest",
     "migration:create": "knex migrate:make"
   },
   "dependencies": {

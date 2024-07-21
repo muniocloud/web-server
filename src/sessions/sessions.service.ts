@@ -40,6 +40,8 @@ export class SessionsService {
 
     const model = this.aiService.getLessonsGeneratorModel();
 
+    const title = `Session about ${input.context} on level ${input.level}`;
+
     const phrases = await this.aiService.generateContent(
       [
         `The user request: Lessons: ${input.lessons}; Level: ${level}; Context: ${input.context}.`,
@@ -52,6 +54,7 @@ export class SessionsService {
       ...input,
       userId: +user.id,
       lessonsItems: phrases,
+      title,
     });
   }
 

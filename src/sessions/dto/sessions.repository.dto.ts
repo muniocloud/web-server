@@ -3,6 +3,7 @@ export type CreateSessionInput = {
   context: string;
   lessons: number;
   level: number;
+  title: string;
   lessonsItems: {
     phrase: string;
   }[];

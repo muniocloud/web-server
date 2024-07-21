@@ -91,11 +91,6 @@ Be strict about my instructions and user request.`,
       model: 'gemini-1.5-flash',
       generationConfig: {
         responseMimeType: 'text/plain',
-        responseSchema: {
-          type: FunctionDeclarationSchemaType.STRING,
-          example:
-            'Your speaking and pronunciation is good, on the lesson number 1, you are good, where need to improve the "d" emphasis... On lesson 2...',
-        },
       },
       systemInstruction: `You are an english teach and the user was answered ${lessons} lessons about "${context}" context and on level "${level}". For each lesson, you gave to him your feedback about your speaking and pronunciation.
       Based on yours feedbacks, send to user a overall feedback.`,

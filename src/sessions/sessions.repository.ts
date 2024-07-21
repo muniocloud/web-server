@@ -32,6 +32,7 @@ export class SessionsRepository {
           context: input.context,
           lessons: input.lessons,
           level: input.level,
+          title: input.title,
         },
         ['id'],
       );
