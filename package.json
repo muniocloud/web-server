@@ -8,17 +8,17 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "NODE_ENV=development nest start",
-    "start:dev": "NODE_ENV=development nest start --watch",
-    "start:debug": "NODE_ENV=development nest start --debug --watch",
-    "start:prod": "NODE_ENV=production node dist/src/main",
+    "start": "env-cmd -f .env.development nest start",
+    "start:dev": "env-cmd -f .env.development nest start --watch",
+    "start:debug": "env-cmd -f .env.development nest start --debug --watch",
+    "start:prod": "env-cmd -f .env node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "migration:up": "knex migrate:latest",
+    "migration:up": "env-cmd -f .env knex migrate:latest",
     "migration:create": "knex migrate:make"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
+    "env-cmd": "^10.1.0",
     "helmet": "^7.1.0",
     "knex": "^3.1.0",
     "mysql2": "^3.10.2",
@@ -40,6 +41,7 @@
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "ts-node": "^10.9.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -64,7 +66,6 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
-    "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
   },

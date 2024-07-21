@@ -4,7 +4,7 @@ service: backend
 
 instance_class: F1
 
-entrypoint: "npm run start:prod"
+entrypoint: "npm run migration:up && npm run start:prod"
 
 automatic_scaling:
   max_instances: 1

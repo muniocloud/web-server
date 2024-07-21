@@ -1,5 +1,4 @@
 import createConfig from './src/database/database.data-source.config';
-import 'dotenv/config';
 
 module.exports = createConfig(
   process.env.MYSQL_DATA_SOURCE_HOST ?? '',
