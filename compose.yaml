@@ -33,6 +33,7 @@ services:
       - backend
     volumes:
       - storage:/data
+      - ${PWD}/examples/storage/:/data
     
 secrets:
   db_password:

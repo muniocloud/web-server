@@ -44,7 +44,7 @@ export class SessionsService {
 
     const phrases = await this.aiService.generateContent(
       [
-        `The user request: Lessons: ${input.lessons}; Level: ${level}; Context: ${input.context}.`,
+        `Lessons: ${input.lessons}; Level: ${level}; Context: ${input.context}.`,
       ],
       phrasesShema,
       model,
@@ -91,10 +91,10 @@ export class SessionsService {
       `answer-lesson-${lesson.id}`,
     );
 
-    const model = this.aiService.getAnswerAnalyserModel(lesson.phrase);
+    const model = this.aiService.getAnswerAnalyserModel();
 
     const data = await this.aiService.generateContent(
-      [this.aiService.createFilePart(audio)],
+      [lesson.phrase, this.aiService.createFilePart(audio)],
       generativeResponseFeedbackSchemaValidator,
       model,
     );
@@ -150,11 +150,7 @@ export class SessionsService {
       );
     }
 
-    const model = this.aiService.getSessionAnalyserModel(
-      session.lessons,
-      session.context,
-      SESSION_LEVEL[session.level],
-    );
+    const model = this.aiService.getSessionAnalyserModel();
 
     const data = await this.aiService.generateContent(
       [
