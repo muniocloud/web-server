@@ -22,9 +22,6 @@ services:
       retries: 20
   
   storage:
-    build: 
-      context: .
-      dockerfile: Dockerfile.storage
     image: fsouza/fake-gcs-server:1
     command: -scheme http
     ports:
