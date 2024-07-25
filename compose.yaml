@@ -32,7 +32,6 @@ services:
     networks:
       - backend
     volumes:
-      - storage:/data
       - ${PWD}/examples/storage/:/data
     
 secrets:
@@ -43,7 +42,6 @@ secrets:
 
 volumes:
     db_data:
-    storage:
 
 networks:
   backend:
