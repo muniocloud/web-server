@@ -1,8 +1,7 @@
 import type { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
-  const transaction = await knex.transaction();
-  return transaction.schema
+  return knex.schema
     .createTable('session', function (table) {
       table.increments('id', {
         primaryKey: true,
@@ -49,5 +48,8 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('auth');
+  return knex.schema
+    .dropTable('session_lesson_response')
+    .dropTable('session_lesson')
+    .dropTable('session');
 }

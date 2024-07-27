@@ -20,7 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migration:up": "env-cmd -f .env.development knex migrate:latest",
     "migration:up:prod": "env-cmd -f .env knex migrate:latest",
-    "migration:create": "knex migrate:make"
+    "migration:create": "env-cmd -f .env.development knex migrate:make",
+    "migration:down": "env-cmd -f .env.development knex migrate:down",
+    "migration:down:prod": "env-cmd -f .env knex migrate:down"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.11.2",
