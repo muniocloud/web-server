@@ -1,9 +1,9 @@
 import { createSessionSchemaInput, getLessonSchemaInput } from '../validator';
 import { z } from 'zod';
-import { JWTUser } from 'src/auth/type';
+import { User } from 'src/auth/type';
 
 export type SessionsContext = {
-  user: JWTUser;
+  user: User;
 };
 
 export type AnswerLessonInput = {

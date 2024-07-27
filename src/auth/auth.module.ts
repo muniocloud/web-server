@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { AuthRepository } from './auth.repository';
 import { DatabaseModule } from 'src/database/database.module';
+import { WsJwtStrategy } from './strategy/ws-jwt.strategy';
 
 @Module({
   imports: [
@@ -25,7 +26,13 @@ import { DatabaseModule } from 'src/database/database.module';
       },
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, AuthRepository],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    AuthRepository,
+    WsJwtStrategy,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

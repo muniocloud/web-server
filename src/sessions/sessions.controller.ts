@@ -19,35 +19,33 @@ import { SessionsService } from './sessions.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateSessionInput } from './dto/sessions.service.dto';
 import { JWTUser } from 'src/auth/decorator/jwt-user.decorator';
-import { JWTUser as JWTUserType } from 'src/auth/type';
+import { User } from 'src/auth/type';
 
 @Controller('sessions')
+@UseGuards(JwtAuthGuard)
 export class SessionsController {
   constructor(private sessionsService: SessionsService) {}
 
   @Post('')
-  @UseGuards(JwtAuthGuard)
   async createSession(
     @Body(new ZodValidatorPipe(createSessionSchemaInput))
     input: CreateSessionInput,
-    @JWTUser() user: JWTUserType,
+    @JWTUser() user: User,
   ) {
     return this.sessionsService.createSession(input, { user });
   }
 
   @Get('')
-  @UseGuards(JwtAuthGuard)
-  async getUserSessions(@JWTUser() user: JWTUserType) {
+  async getUserSessions(@JWTUser() user: User) {
     return this.sessionsService.getUserSessions({
       userId: user.id,
     });
   }
 
   @Get(':session')
-  @UseGuards(JwtAuthGuard)
   async getSession(
     @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @JWTUser() user: JWTUserType,
+    @JWTUser() user: User,
   ) {
     return this.sessionsService.getUserSession({
       sessionId,
@@ -56,10 +54,9 @@ export class SessionsController {
   }
 
   @Get(':session/lessons/status')
-  @UseGuards(JwtAuthGuard)
   async getLessonsStatus(
     @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @JWTUser() user: JWTUserType,
+    @JWTUser() user: User,
   ) {
     return this.sessionsService.getLessonsStatus({
       sessionId,
@@ -68,10 +65,9 @@ export class SessionsController {
   }
 
   @Get(':session/result')
-  @UseGuards(JwtAuthGuard)
   async getSessionResult(
     @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @JWTUser() user: JWTUserType,
+    @JWTUser() user: User,
   ) {
     return this.sessionsService.createOrGetSessionResult(
       {
@@ -82,11 +78,10 @@ export class SessionsController {
   }
 
   @Get(':session/lessons/:lesson')
-  @UseGuards(JwtAuthGuard)
   async getLesson(
     @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
     @Param('lesson', new ZodValidatorPipe(idSchema)) lessonId: number,
-    @JWTUser() user: JWTUserType,
+    @JWTUser() user: User,
   ) {
     return this.sessionsService.getLesson(
       {
@@ -98,14 +93,13 @@ export class SessionsController {
   }
 
   @Post(':session/lessons/:lesson')
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('audio'))
   async answerLesson(
     @UploadedFile(new ZodValidatorPipe(audioFileSchemaValidator))
     audio: Express.Multer.File,
     @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
     @Param('lesson', new ZodValidatorPipe(idSchema)) lessonId: number,
-    @JWTUser() user: JWTUserType,
+    @JWTUser() user: User,
   ) {
     return this.sessionsService.answerLesson(
       {

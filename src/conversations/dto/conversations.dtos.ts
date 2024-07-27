@@ -1,4 +1,4 @@
-import { JWTUser } from 'src/auth/type';
+import { JWTPayload } from 'src/auth/type';
 import { ConversationMessage } from '../type';
 
 export type CreateConversationInput = {
@@ -15,5 +15,5 @@ export type CreateConversationRepositoryInput = {
 };
 
 export type ConversationsContext = {
-  user: JWTUser;
+  user: JWTPayload;
 };
