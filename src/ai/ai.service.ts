@@ -102,6 +102,39 @@ export class AiService {
     });
   }
 
+  getConversationsGeneratorModel() {
+    return this.geminiAI.createGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseSchema: {
+          type: FunctionDeclarationSchemaType.ARRAY,
+          items: {
+            type: FunctionDeclarationSchemaType.OBJECT,
+            properties: {
+              message: {
+                type: FunctionDeclarationSchemaType.STRING,
+              },
+              isUser: {
+                type: FunctionDeclarationSchemaType.BOOLEAN,
+              },
+            },
+          },
+        },
+        responseMimeType: 'application/json',
+      },
+      systemInstruction: `You are a english teacher and the user will request you to create a conversation to practise (speaking, pronunciation).
+- There are some rules to create the conversation scenarios:
+  - Is always in pair. One speak the first message and other speak the next.
+  - Level and Context will be provided by the user and you need to follow this content to create the conversation;
+  - Must be short, with few interactions;
+  - You should choose a name for anything;
+  - Be strict about these instructions and the user request;
+- Your response must be a JSON as a array of objects. These objects has the following schema:
+  - message: The conversation message. Example: Good morning
+  - isUser: true if the message is to user try to speak.`,
+    });
+  }
+
   async generateContent<R>(
     inputs: Array<string | Part>,
     schema: ZodSchema<R>,

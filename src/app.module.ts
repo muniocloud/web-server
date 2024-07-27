@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { AiModule } from './ai/ai.module';
+import { ConversationsModule } from './conversations/conversations.module';
 
 const NODE_ENV = process.env.NODE_ENV;
 
@@ -22,6 +23,7 @@ const NODE_ENV = process.env.NODE_ENV;
     UserModule,
     SessionsModule,
     AiModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [],
