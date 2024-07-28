@@ -5,6 +5,7 @@ import { ConversationsRepository } from './conversations.repository';
 import { AiModule } from 'src/ai/ai.module';
 import { DatabaseModule } from 'src/database/database.module';
 import { ConversationsGateway } from './conversations.gateway';
+import { TTSModule } from 'src/tts/tts.module';
 
 @Module({
   controllers: [ConversationsController],
@@ -13,6 +14,6 @@ import { ConversationsGateway } from './conversations.gateway';
     ConversationsRepository,
     ConversationsGateway,
   ],
-  imports: [AiModule, DatabaseModule],
+  imports: [AiModule, DatabaseModule, TTSModule],
 })
 export class ConversationsModule {}

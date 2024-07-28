@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { AiModule } from './ai/ai.module';
 import { ConversationsModule } from './conversations/conversations.module';
+import { TTSModule } from './tts/tts.module';
 
 const NODE_ENV = process.env.NODE_ENV;
 
@@ -17,6 +18,7 @@ const NODE_ENV = process.env.NODE_ENV;
       isGlobal: true,
       envFilePath: `${process.cwd()}/.env${NODE_ENV === 'production' ? '' : `.${NODE_ENV}`}`,
     }),
+    TTSModule,
     DatabaseModule,
     UploadModule,
     AuthModule,

@@ -14,6 +14,7 @@ export class AuthSocketIoAdapter extends IoAdapter {
   createIOServer(port: number, options: ServerOptions): any {
     options.allowRequest = async (request, allowFunction) => {
       try {
+        console.log('first');
         const token = this.authService.getHTTPRequestPlainJWTToken(request);
 
         if (!token) {

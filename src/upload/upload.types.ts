@@ -1,3 +1,5 @@
+import { BasicData } from 'src/shared/shared.types';
+
 export type UploadInput = {
   buffer: Buffer;
   type: string;
@@ -5,5 +7,8 @@ export type UploadInput = {
 };
 
 export interface UploadProvider {
-  upload: (file: Express.Multer.File, customName?: string) => Promise<string>;
+  upload: (
+    file: Express.Multer.File | BasicData,
+    customName?: string,
+  ) => Promise<string>;
 }

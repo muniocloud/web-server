@@ -6,7 +6,6 @@ export const zodValidate = (value: unknown, schema: ZodSchema) => {
     const parsedValue = schema.parse(value);
     return parsedValue;
   } catch (error) {
-    console.log(error);
     if (error instanceof ZodError && error.issues.length) {
       throw new BadRequestException(error.issues[0].message);
     }
