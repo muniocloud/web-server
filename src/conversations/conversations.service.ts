@@ -202,7 +202,7 @@ export class ConversationsService {
       context,
     );
 
-    context.socket?.emit('finish', {
+    context.socket?.emit('disconnect', {
       feedback: data,
       rating: avgRating,
       status: 'finished',
@@ -260,6 +260,7 @@ export class ConversationsService {
         audio: input.audio,
         mimetype: input.mimetype,
         conversationId: input.conversationId,
+        conversationMessageId: nextMessage.id,
         feedback: data.feedback,
         rating: data.rating,
       },
@@ -287,6 +288,7 @@ export class ConversationsService {
     const { audioUrl } = await this.uploadAndSaveMessage(
       {
         audio,
+        conversationMessageId: message.id,
         conversationId,
         feedback: 'generated',
         rating: 10,
@@ -299,11 +301,11 @@ export class ConversationsService {
 
   private async uploadAndSaveMessage(
     {
-      conversationId,
       audio,
       mimetype = 'audio/mpeg',
       feedback,
       rating,
+      conversationMessageId,
     }: UploadAndSaveMessageInput,
     context: ConversationsContext,
   ) {
@@ -318,7 +320,7 @@ export class ConversationsService {
     await this.conversationsRepository.addConversationMessageResponse(
       {
         audioUrl,
-        conversationMessageId: conversationId,
+        conversationMessageId,
         feedback,
         rating,
       },

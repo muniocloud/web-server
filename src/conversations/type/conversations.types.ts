@@ -11,6 +11,7 @@ export type Conversation = {
 };
 
 export type ConversationMessage = {
+  id: number;
   message: string;
   isUser: boolean;
 };

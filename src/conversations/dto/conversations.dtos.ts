@@ -11,7 +11,7 @@ export type CreateConversationRepositoryInput = {
   level: number;
   context: string;
   title: string;
-  messages: ConversationMessage[];
+  messages: Omit<ConversationMessage, 'id'>[];
   status: ConversationStatus;
 };
 
@@ -42,6 +42,7 @@ export type SpeechAndSaveMessageInput = {
 
 export type UploadAndSaveMessageInput = {
   conversationId: number;
+  conversationMessageId: number;
   audio: Buffer;
   mimetype?: string;
   rating: number;
