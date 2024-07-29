@@ -74,6 +74,24 @@ export class ConversationsService {
     return conversation;
   }
 
+  async getFullConversation(
+    input: GetConversationInput,
+    context: ConversationsContext,
+  ) {
+    const conversation = await this.conversationsRepository.getFullConversation(
+      {
+        id: input.id,
+      },
+      context,
+    );
+
+    if (!conversation) {
+      throw new WsException('Conversation not found');
+    }
+
+    return conversation;
+  }
+
   private async getNextMessage(
     input: GetNextMessageInput,
     context: ConversationsContext,
@@ -95,12 +113,23 @@ export class ConversationsService {
     const conversation = await this.getConversation(input, context);
 
     if (conversation.status === 'finished') {
-      context.socket?.emit('disconnect');
+      context.socket?.emit('close');
       context.socket?.disconnect(true);
       return;
     }
 
     if (conversation.status === 'started') {
+      const nextMessage = await this.getNextMessage(
+        {
+          conversationId: input.id,
+        },
+        context,
+      );
+
+      if (nextMessage?.isUser) {
+        context.socket?.emit('request-message', nextMessage);
+      }
+
       return;
     }
 
@@ -202,7 +231,7 @@ export class ConversationsService {
       context,
     );
 
-    context.socket?.emit('disconnect', {
+    context.socket?.emit('close', {
       feedback: data,
       rating: avgRating,
       status: 'finished',
@@ -223,7 +252,7 @@ export class ConversationsService {
     );
 
     if (conversation.status !== 'started') {
-      context.socket?.emit('disconnect');
+      context.socket?.emit('close');
       context.socket?.disconnect();
       return;
     }
@@ -285,7 +314,7 @@ export class ConversationsService {
     context: ConversationsContext,
   ) {
     const audio = await this.ttsService.speechToText(message.message);
-    const { audioUrl } = await this.uploadAndSaveMessage(
+    const audioUrl = await this.uploadAndSaveMessage(
       {
         audio,
         conversationMessageId: message.id,
@@ -327,8 +356,6 @@ export class ConversationsService {
       context,
     );
 
-    return {
-      audioUrl,
-    };
+    return audioUrl;
   }
 }

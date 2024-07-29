@@ -14,7 +14,12 @@ import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
 import { conversationWsSendMessage, conversationWsSetup } from './validator';
 import { ConversationSendMessageInput, ConversationSetupInput } from './type';
 import { ConversationsService } from './conversations.service';
-@WebSocketGateway({ namespace: 'conversations' })
+@WebSocketGateway({
+  namespace: 'conversations',
+  cors: {
+    origin: '*',
+  },
+})
 @UseGuards(WsJwtAuthGuard)
 @UseFilters(HttpExceptionFilter)
 export class ConversationsGateway {

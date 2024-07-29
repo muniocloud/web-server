@@ -100,7 +100,7 @@ export class ConversationsRepository {
   getFullConversation(
     input: GetConversationRepositoryInput,
     context: ConversationsContext,
-  ) {
+  ): Promise<Conversation | null> {
     return this.dataSource('conversation AS c')
       .select([
         'c.id',
@@ -111,7 +111,7 @@ export class ConversationsRepository {
         this.dataSource.raw(`JSON_ARRAYAGG(
         JSON_OBJECT(
             'id', cm.id,
-            'messsage', cm.message,
+            'message', cm.message,
           	'isUser', cm.is_user,
           	'audioUrl', cmr.audio_response_url
         ) 
@@ -120,7 +120,7 @@ export class ConversationsRepository {
       .join('conversation_message AS cm', function () {
         this.on('c.id', '=', 'cm.conversation_id')
           .andOnVal('c.user_id', '=', context.user.id)
-          .andOnNull('deleted_at');
+          .andOnNull('cm.deleted_at');
       })
       .leftJoin('conversation_message_response AS cmr', function () {
         this.on('cm.id', '=', 'cmr.conversation_message_id').andOnNull(
@@ -128,7 +128,8 @@ export class ConversationsRepository {
         );
       })
       .where('c.id', '=', input.id)
-      .whereNull('c.deleted_at');
+      .whereNull('c.deleted_at')
+      .first();
   }
 
   getUserConversationMessages(

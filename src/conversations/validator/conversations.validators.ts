@@ -17,6 +17,8 @@ export const createConversationSchemaValidator = z.object({
   ]),
 });
 
+export const conversationIdSchemaValidator = z.coerce.number();
+
 export const conversationMessagesSchema = z
   .array(
     z.object({
