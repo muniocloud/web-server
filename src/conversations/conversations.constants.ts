@@ -3,3 +3,11 @@ export const CONVERSATION_LEVEL = {
   2: 'medium',
   3: 'hard',
 };
+
+export const CONVERSATION_STATUS = {
+  CREATED: 0,
+  STARTED: 1,
+  PROCESSING_MESSAGE: 2,
+  FINISHING: 3,
+  FINISHED: 4,
+};

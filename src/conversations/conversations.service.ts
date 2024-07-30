@@ -10,18 +10,22 @@ import {
   SetupConversationInput,
   SpeechAndSaveMessageInput,
   UploadAndSaveMessageInput,
-} from './dto/conversations.dtos';
+} from './conversations.dtos';
 import { AiService } from 'src/ai/ai.service';
 import { ConversationsRepository } from './conversations.repository';
 import {
   conversationMessagesSchema,
   generativeResponseFeedbackOverallSchemaValidator,
   generativeResponseFeedbackSchemaValidator,
-} from './validator';
-import { CONVERSATION_LEVEL } from './conversations.constants';
+} from './conversations.validators';
+import {
+  CONVERSATION_LEVEL,
+  CONVERSATION_STATUS,
+} from './conversations.constants';
 import { WsException } from '@nestjs/websockets';
 import { TTSService } from 'src/tts/tts.service';
 import { UploadService } from 'src/upload/upload.service';
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class ConversationsService {
@@ -110,21 +114,20 @@ export class ConversationsService {
     input: SetupConversationInput,
     context: ConversationsContext,
   ) {
-    const conversation = await this.getConversation(input, context);
+    const conversation = await this.getConversation(
+      {
+        id: input.conversationId,
+      },
+      context,
+    );
 
     if (conversation.status === 'finished') {
-      context.socket?.emit('close');
       context.socket?.disconnect(true);
       return;
     }
 
     if (conversation.status === 'started') {
-      const nextMessage = await this.getNextMessage(
-        {
-          conversationId: input.id,
-        },
-        context,
-      );
+      const nextMessage = await this.getNextMessage(input, context);
 
       if (nextMessage?.isUser) {
         context.socket?.emit('request-message', nextMessage);
@@ -135,30 +138,26 @@ export class ConversationsService {
 
     await this.conversationsRepository.updateConversation(
       {
-        id: input.id,
+        id: input.conversationId,
         status: 'started',
       },
       context,
     );
 
-    await this.handleNextMessage(
-      {
-        conversationId: input.id,
-      },
-      context,
-    );
+    this.emitConversationStatus(CONVERSATION_STATUS.STARTED, context.socket);
+
+    this.handleNextMessage(input, context);
+  }
+
+  emitConversationStatus(status: number, socket?: Socket, ...extraData) {
+    socket?.emit('status', status, extraData);
   }
 
   async handleNextMessage(
     input: HandleNextMessageInput,
     context: ConversationsContext,
   ) {
-    const nextMessage = await this.getNextMessage(
-      {
-        conversationId: input.conversationId,
-      },
-      context,
-    );
+    const nextMessage = await this.getNextMessage(input, context);
 
     if (!nextMessage) {
       this.finishConversation(
@@ -174,6 +173,11 @@ export class ConversationsService {
       context.socket?.emit('request-message', nextMessage);
       return;
     }
+
+    this.emitConversationStatus(
+      CONVERSATION_STATUS.PROCESSING_MESSAGE,
+      context.socket,
+    );
 
     const audioUrl = await this.speechAndSaveMessage(
       {
@@ -195,6 +199,7 @@ export class ConversationsService {
     input: FinishConversationInput,
     context: ConversationsContext,
   ) {
+    this.emitConversationStatus(CONVERSATION_STATUS.FINISHING, context.socket);
     const feedbacksMessages =
       await this.conversationsRepository.getUserConversationMessages(
         {
@@ -231,11 +236,18 @@ export class ConversationsService {
       context,
     );
 
-    context.socket?.emit('close', {
-      feedback: data,
-      rating: avgRating,
-      status: 'finished',
-    });
+    const updatedFullConversation = await this.getFullConversation(
+      {
+        id: input.conversationId,
+      },
+      context,
+    );
+
+    this.emitConversationStatus(
+      CONVERSATION_STATUS.FINISHED,
+      context.socket,
+      updatedFullConversation,
+    );
 
     context.socket?.disconnect();
   }
@@ -244,6 +256,11 @@ export class ConversationsService {
     input: HandleSendMessageInput,
     context: ConversationsContext,
   ) {
+    this.emitConversationStatus(
+      CONVERSATION_STATUS.PROCESSING_MESSAGE,
+      context.socket,
+    );
+
     const conversation = await this.getConversation(
       {
         id: input.conversationId,
@@ -252,7 +269,6 @@ export class ConversationsService {
     );
 
     if (conversation.status !== 'started') {
-      context.socket?.emit('close');
       context.socket?.disconnect();
       return;
     }

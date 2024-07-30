@@ -4,11 +4,12 @@ import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
 import {
   conversationIdSchemaValidator,
   createConversationSchemaValidator,
-} from './validator';
-import { CreateConversationInput } from './dto/conversations.dtos';
+} from './conversations.validators';
+import { CreateConversationInput } from './conversations.dtos';
 import { JWTUser } from 'src/auth/decorator/jwt-user.decorator';
 import { User } from 'src/auth/type';
 import { ConversationsService } from './conversations.service';
+import { sleep } from 'src/utils/sleep';
 
 @Controller('conversations')
 @UseGuards(JwtAuthGuard)
@@ -33,6 +34,7 @@ export class ConversationsController {
     conversationId: number,
     @JWTUser() user: User,
   ) {
+    await sleep(1000);
     return this.conversationsService.getFullConversation(
       {
         id: conversationId,

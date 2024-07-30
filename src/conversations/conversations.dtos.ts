@@ -1,5 +1,5 @@
 import { JWTPayload } from 'src/auth/type';
-import { ConversationMessage, ConversationStatus } from '../type';
+import { ConversationMessage, ConversationStatus } from './conversations.types';
 import { Socket } from 'socket.io';
 
 export type CreateConversationInput = {
@@ -20,7 +20,7 @@ export type GetConversationInput = {
 };
 
 export type SetupConversationInput = {
-  id: number;
+  conversationId: number;
 };
 
 export type GetNextMessageInput = {

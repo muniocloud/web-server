@@ -11,8 +11,14 @@ import { JWTUser } from 'src/auth/decorator/ws-jwt-user.decorator';
 import { User } from 'src/auth/type';
 import { Socket } from 'socket.io';
 import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
-import { conversationWsSendMessage, conversationWsSetup } from './validator';
-import { ConversationSendMessageInput, ConversationSetupInput } from './type';
+import {
+  conversationWsSendMessage,
+  conversationWsSetup,
+} from './conversations.validators';
+import {
+  ConversationSendMessageInput,
+  ConversationSetupInput,
+} from './conversations.types';
 import { ConversationsService } from './conversations.service';
 @WebSocketGateway({
   namespace: 'conversations',
@@ -32,9 +38,9 @@ export class ConversationsGateway {
     data: ConversationSetupInput,
     @JWTUser() user: User,
   ) {
-    return this.conversationsService.handleSetupConversation(
+    this.conversationsService.handleSetupConversation(
       {
-        id: data.conversationId,
+        conversationId: data.conversationId,
       },
       {
         user,
@@ -50,7 +56,7 @@ export class ConversationsGateway {
     data: ConversationSendMessageInput,
     @JWTUser() user: User,
   ) {
-    return this.conversationsService.handleSendMessage(
+    this.conversationsService.handleSendMessage(
       {
         audio: data.audio,
         conversationId: data.conversationId,

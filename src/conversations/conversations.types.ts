@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { conversationWsSendMessage, conversationWsSetup } from '../validator';
+import {
+  conversationWsSendMessage,
+  conversationWsSetup,
+} from './conversations.validators';
 
 export type ConversationStatus = 'created' | 'started' | 'finished';
 

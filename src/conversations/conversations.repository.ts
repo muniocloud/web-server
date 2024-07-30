@@ -5,14 +5,14 @@ import {
   CreateConversationRepositoryInput,
   GetConversationRepositoryInput,
   UpdateConversationRepositoryInput,
-} from './dto/conversations.dtos';
+} from './conversations.dtos';
 import { DATA_SOURCE_PROVIDER } from 'src/database/database.constants';
 import { Knex } from 'knex';
 import {
   Conversation,
   ConversationMessage,
   ConversationMessageResponse,
-} from './type';
+} from './conversations.types';
 
 @Injectable()
 export class ConversationsRepository {
@@ -40,11 +40,10 @@ export class ConversationsRepository {
         is_user: message.isUser,
       }));
 
-      const datas = await trx('conversation_message').insert(messages, ['id']);
+      await trx('conversation_message').insert(messages, ['id']);
 
       return {
         conversationId,
-        datas,
       };
     });
   }

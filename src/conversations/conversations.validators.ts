@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE = 1024 * 1024 * MAX_FILE_SIZE_MB;
+
 export const createConversationSchemaValidator = z.object({
   level: z.number().min(1).max(3),
   context: z.enum([
@@ -48,7 +51,9 @@ export const conversationWsSendMessage = z
       conversationId: z.number().positive(),
       mimetype: z.string().default('audio/mpeg'),
     }),
-    z.instanceof(Buffer),
+    z.instanceof(Buffer).refine((buffer) => buffer.byteLength < MAX_FILE_SIZE, {
+      message: `Audio file is big, please compress first. Max size: ${MAX_FILE_SIZE_MB}mb`,
+    }),
   ])
   .transform((data) => {
     return {
