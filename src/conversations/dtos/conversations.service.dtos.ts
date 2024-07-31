@@ -9,18 +9,27 @@ export type CreateConversationInput = z.infer<
   typeof createConversationSchemaValidator
 >;
 
-export type SpeechAndSaveMessageInput = {
+export type SaveMessageInput = {
+  conversationId: number;
+  conversationMessageId: number;
+  rating: number;
+  feedback: string;
+  audioUrl: string;
+};
+
+export type UploadAudioInput = {
+  audio: Buffer;
+  mimetype?: string;
+};
+
+export type HandleAIMessageProcessingInput = {
   conversationId: number;
   message: ConversationMessage;
 };
 
-export type UploadAndSaveMessageInput = {
-  conversationId: number;
-  conversationMessageId: number;
-  audio: Buffer;
-  mimetype?: string;
-  rating: number;
-  feedback: string;
+export type EmitMessageInput = {
+  audioUrl: string;
+  message: ConversationMessage;
 };
 
 export type HandleSendMessageInput = {

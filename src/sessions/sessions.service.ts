@@ -20,7 +20,7 @@ import {
   phrasesShema,
 } from './validators/sessions.validators';
 import { Lesson, LessonStatus, Session } from './types/sessions.types';
-import { avgCalculator } from 'src/common/util/avg-calculator';
+import { avgRatingCalculator } from 'src/common/util/avg-rating-calculator';
 
 @Injectable()
 export class SessionsService {
@@ -165,7 +165,7 @@ export class SessionsService {
       model,
     );
 
-    const rating = +avgCalculator(awnseredLessons).toFixed(2);
+    const rating = +avgRatingCalculator(awnseredLessons).toFixed(2);
 
     await this.sessionsRepository.updateSession(
       {

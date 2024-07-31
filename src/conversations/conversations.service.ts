@@ -8,9 +8,11 @@ import { Socket } from 'socket.io';
 import { DURATION_LABEL, LEVEL_LABEL, STATUS } from 'src/common/enums';
 import {
   CreateConversationInput,
+  EmitMessageInput,
+  HandleAIMessageProcessingInput,
   HandleSendMessageInput,
-  SpeechAndSaveMessageInput,
-  UploadAndSaveMessageInput,
+  SaveMessageInput,
+  UploadAudioInput,
 } from './dtos/conversations.service.dtos';
 import { ConversationsContext } from './dtos/conversations.dtos';
 import {
@@ -19,7 +21,7 @@ import {
   generativeResponseFeedbackSchemaValidator,
 } from './validators/generative-content.validators';
 import { WS_CONVERSATION_STATUS } from './enums/ws.enums';
-import { avgCalculator } from 'src/common/util/avg-calculator';
+import { avgRatingCalculator } from 'src/common/util/avg-rating-calculator';
 
 @Injectable()
 export class ConversationsService {
@@ -151,23 +153,57 @@ export class ConversationsService {
       return;
     }
 
+    return this.handleAIMessageProcessing(
+      {
+        conversationId,
+        message: nextMessage,
+      },
+      context,
+    );
+  }
+
+  async handleAIMessageProcessing(
+    { conversationId, message }: HandleAIMessageProcessingInput,
+    context: ConversationsContext,
+  ) {
     this.emitConversationStatus(
       WS_CONVERSATION_STATUS.PROCESSING_MESSAGE,
       context.socket,
     );
 
-    const audioUrl = await this.speechAndSaveMessage(
+    const audio = await this.ttsService.speechToText(message.message);
+
+    const audioUrl = await this.uploadAudio(
       {
-        conversationId: conversationId,
-        message: nextMessage,
+        audio: audio,
+        mimetype: 'audio/mpeg',
       },
       context,
     );
 
-    context.socket?.emit('message', {
-      ...nextMessage,
-      audioUrl,
-    });
+    this.emitMessage(
+      {
+        audioUrl,
+        message,
+      },
+      context,
+    );
+
+    await this.saveMessage(
+      {
+        audioUrl,
+        conversationId,
+        conversationMessageId: message.id,
+        feedback: 'audio generated',
+        rating: 10,
+      },
+      context,
+    );
+
+    this.emitConversationStatus(
+      WS_CONVERSATION_STATUS.MESSAGE_PROCESSED,
+      context.socket,
+    );
 
     return this.handleNextMessage(conversationId, context);
   }
@@ -200,7 +236,7 @@ export class ConversationsService {
       model,
     );
 
-    const rating = +avgCalculator(feedbacksMessages).toFixed(2);
+    const rating = +avgRatingCalculator(feedbacksMessages).toFixed(2);
 
     const conversationFeedback = {
       feedback,
@@ -263,6 +299,22 @@ export class ConversationsService {
       );
     }
 
+    const audioUrl = await this.uploadAudio(
+      {
+        audio: input.audio,
+        mimetype: input.mimetype,
+      },
+      context,
+    );
+
+    this.emitMessage(
+      {
+        audioUrl,
+        message: nextMessage,
+      },
+      context,
+    );
+
     const model = this.aiService.getAudioMessageAnalyserModel();
 
     const data = await this.aiService.generateContent(
@@ -277,10 +329,9 @@ export class ConversationsService {
       model,
     );
 
-    const audioUrl = await this.uploadAndSaveMessage(
+    await this.saveMessage(
       {
-        audio: input.audio,
-        mimetype: input.mimetype,
+        audioUrl,
         conversationId: input.conversationId,
         conversationMessageId: nextMessage.id,
         feedback: data.feedback,
@@ -289,51 +340,18 @@ export class ConversationsService {
       context,
     );
 
-    context.socket?.emit('message', {
-      ...nextMessage,
-      audioUrl,
-    });
+    this.emitConversationStatus(
+      WS_CONVERSATION_STATUS.MESSAGE_PROCESSED,
+      context.socket,
+    );
 
     return this.handleNextMessage(input.conversationId, context);
   }
 
-  private async speechAndSaveMessage(
-    { conversationId, message }: SpeechAndSaveMessageInput,
+  private async saveMessage(
+    { feedback, rating, conversationMessageId, audioUrl }: SaveMessageInput,
     context: ConversationsContext,
   ) {
-    const audio = await this.ttsService.speechToText(message.message);
-    const audioUrl = await this.uploadAndSaveMessage(
-      {
-        audio,
-        conversationMessageId: message.id,
-        conversationId,
-        feedback: 'generated',
-        rating: 10,
-      },
-      context,
-    );
-
-    return audioUrl;
-  }
-
-  private async uploadAndSaveMessage(
-    {
-      audio,
-      mimetype = 'audio/mpeg',
-      feedback,
-      rating,
-      conversationMessageId,
-    }: UploadAndSaveMessageInput,
-    context: ConversationsContext,
-  ) {
-    const audioUrl = await this.uploadService.upload(
-      {
-        buffer: audio,
-        mimetype,
-      },
-      'conversation-audio',
-    );
-
     await this.conversationsRepository.addConversationMessageResponse(
       {
         audioUrl,
@@ -343,7 +361,30 @@ export class ConversationsService {
       },
       context,
     );
+  }
+
+  private async uploadAudio(
+    { audio, mimetype = 'audio/mpeg' }: UploadAudioInput,
+    _context: ConversationsContext,
+  ) {
+    const audioUrl = await this.uploadService.upload(
+      {
+        buffer: audio,
+        mimetype,
+      },
+      'conversation-audio',
+    );
 
     return audioUrl;
+  }
+
+  private emitMessage(
+    { audioUrl, message }: EmitMessageInput,
+    context: ConversationsContext,
+  ) {
+    context.socket?.emit('message', {
+      ...message,
+      audioUrl,
+    });
   }
 }
