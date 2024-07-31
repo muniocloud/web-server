@@ -1,4 +1,4 @@
-import { BasicData } from 'src/shared/shared.types';
+import { BasicData } from 'src/common/types';
 
 export type UploadInput = {
   buffer: Buffer;

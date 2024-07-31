@@ -13,8 +13,8 @@ import {
   InlineDataPart,
   Part,
 } from '@google/generative-ai';
-import { executeCallbackWithRetry } from 'src/utils/retry';
-import { BasicData } from 'src/shared/shared.types';
+import { executeCallbackWithRetry } from 'src/common/util/retry';
+import { BasicData } from 'src/common/types';
 
 @Injectable()
 export class AiService {
@@ -172,7 +172,7 @@ export class AiService {
       systemInstruction: `You are a english teacher and the user will request you to create a conversation to practise (speaking, pronunciation).
 - There are some rules to create the conversation scenarios:
   - Is always in pair. One speak the first message and other speak the next.
-  - Level and Context will be provided by the user and you need to follow this content to create the conversation;
+  - Level, Context and Duration (how many messages) will be provided by the user and you need to follow this content to create the conversation;
   - Must be short, with few interactions;
   - You should choose a name for anything;
   - Be strict about these instructions and the user request;

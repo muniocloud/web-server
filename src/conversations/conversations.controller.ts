@@ -1,20 +1,19 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
-import { ZodValidatorPipe } from 'src/utils/zod/zod-validator.pipe';
-import {
-  conversationIdSchemaValidator,
-  createConversationSchemaValidator,
-} from './conversations.validators';
-import { CreateConversationInput } from './conversations.dtos';
+import { ZodValidatorPipe } from 'src/common/pipes';
+import { CreateConversationInput } from './dtos/conversations.service.dtos';
 import { JWTUser } from 'src/auth/decorator/jwt-user.decorator';
 import { User } from 'src/auth/type';
 import { ConversationsService } from './conversations.service';
-import { sleep } from 'src/utils/sleep';
+import {
+  conversationIdSchemaValidator,
+  createConversationSchemaValidator,
+} from './validators/conversations.validators';
 
 @Controller('conversations')
 @UseGuards(JwtAuthGuard)
 export class ConversationsController {
-  constructor(private conversationsService: ConversationsService) {}
+  constructor(private readonly conversationsService: ConversationsService) {}
 
   @Post('')
   async createConversation(
@@ -34,12 +33,9 @@ export class ConversationsController {
     conversationId: number,
     @JWTUser() user: User,
   ) {
-    await sleep(1000);
-    return this.conversationsService.getFullConversation(
-      {
-        id: conversationId,
-      },
-      { user },
-    );
+    return this.conversationsService.getFullConversation(conversationId, {
+      user,
+      isController: true,
+    });
   }
 }

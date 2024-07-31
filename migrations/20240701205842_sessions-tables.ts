@@ -7,14 +7,27 @@ export async function up(knex: Knex): Promise<void> {
         primaryKey: true,
       });
       table.integer('user_id').unsigned().notNullable().references('user.id');
-      table.enum('status', ['started', 'finished']).notNullable();
+      table.integer('status').unsigned().defaultTo(1).notNullable();
+      table.string('title').notNullable();
       table.string('context', 320).notNullable();
-      table.integer('lessons').notNullable();
-      table.integer('level').notNullable();
-      table.text('feedback');
-      table.integer('rating');
+      table.integer('lessons').unsigned().notNullable();
+      table.integer('level').unsigned().notNullable();
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('updated_at');
+      table.timestamp('deleted_at');
+    })
+    .createTable('session_feedback', function (table) {
+      table.increments('id', {
+        primaryKey: true,
+      });
+      table
+        .integer('session_id')
+        .unsigned()
+        .notNullable()
+        .references('session.id');
+      table.text('feedback').notNullable();
+      table.integer('rating').notNullable();
+      table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('deleted_at');
     })
     .createTable('session_lesson', function (table) {
@@ -51,5 +64,6 @@ export async function down(knex: Knex): Promise<void> {
   return knex.schema
     .dropTable('session_lesson_response')
     .dropTable('session_lesson')
+    .dropTable('session_feedback')
     .dropTable('session');
 }

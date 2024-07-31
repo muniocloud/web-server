@@ -2,7 +2,7 @@ import { UploadProvider } from './upload.types';
 import { randomUUID } from 'crypto';
 import { Bucket, File, Storage, StorageOptions } from '@google-cloud/storage';
 import { ConfigService } from '@nestjs/config';
-import { BasicData } from 'src/shared/shared.types';
+import { BasicData } from 'src/common/types';
 
 export class GCSProvider implements UploadProvider {
   private readonly gcsStorage: Storage;

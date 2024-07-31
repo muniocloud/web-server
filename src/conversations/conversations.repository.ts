@@ -1,11 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  AddConversationMessageResponseRepositoryInput,
-  ConversationsContext,
-  CreateConversationRepositoryInput,
-  GetConversationRepositoryInput,
-  UpdateConversationRepositoryInput,
-} from './conversations.dtos';
 import { DATA_SOURCE_PROVIDER } from 'src/database/database.constants';
 import { Knex } from 'knex';
 import {
@@ -13,13 +6,20 @@ import {
   ConversationMessage,
   ConversationMessageResponse,
 } from './conversations.types';
+import {
+  AddConversationMessageResponseInput,
+  CreateConversationFeedbackInput,
+  CreateConversationInput,
+  UpdateConversationInput,
+} from './dtos/conversations.repository.dtos';
+import { ConversationsContext } from './dtos/conversations.dtos';
 
 @Injectable()
 export class ConversationsRepository {
   constructor(@Inject(DATA_SOURCE_PROVIDER) private dataSource: Knex) {}
 
   createConversation(
-    input: CreateConversationRepositoryInput,
+    input: CreateConversationInput,
     context: ConversationsContext,
   ) {
     return this.dataSource.transaction(async (trx) => {
@@ -48,19 +48,41 @@ export class ConversationsRepository {
     });
   }
 
+  createConversationFeedback(
+    input: CreateConversationFeedbackInput,
+    _context: ConversationsContext,
+  ) {
+    return this.dataSource.transaction(async (trx) => {
+      const [feedbackId] = await trx('conversation_feedback').insert(
+        {
+          title: input.feedback,
+          conversation_id: input.conversationId,
+        },
+        ['id'],
+      );
+
+      return {
+        feedbackId,
+      };
+    });
+  }
+
   updateConversation(
-    input: UpdateConversationRepositoryInput,
+    input: UpdateConversationInput,
     context: ConversationsContext,
   ) {
     const { id, ...inputData } = input;
     return this.dataSource('conversation')
-      .update(inputData)
+      .update({
+        ...inputData,
+        updated_at: this.dataSource.fn.now(),
+      })
       .where('id', '=', id)
       .where('user_id', '=', context.user.id);
   }
 
   addConversationMessageResponse(
-    input: AddConversationMessageResponseRepositoryInput,
+    input: AddConversationMessageResponseInput,
     _context: ConversationsContext,
   ) {
     return this.dataSource.transaction(async function (transaction) {
@@ -78,13 +100,13 @@ export class ConversationsRepository {
   }
 
   getConversation(
-    input: GetConversationRepositoryInput,
+    conversationId: number,
     context: ConversationsContext,
   ): Promise<Conversation | null> {
     return this.dataSource('conversation')
       .select(['id', 'status', 'title'])
       .where('user_id', '=', context.user.id)
-      .andWhere('id', '=', input.id)
+      .andWhere('id', '=', conversationId)
       .whereNull('deleted_at')
       .first();
   }
@@ -97,7 +119,7 @@ export class ConversationsRepository {
   }
 
   getFullConversation(
-    input: GetConversationRepositoryInput,
+    conversationId: number,
     context: ConversationsContext,
   ): Promise<Conversation | null> {
     return this.dataSource('conversation AS c')
@@ -105,8 +127,8 @@ export class ConversationsRepository {
         'c.id',
         'c.title',
         'c.status',
-        'c.rating',
-        'c.feedback',
+        'cf.rating',
+        'cf.feedback',
         this.dataSource.raw(`JSON_ARRAYAGG(
         JSON_OBJECT(
             'id', cm.id,
@@ -126,13 +148,17 @@ export class ConversationsRepository {
           'cmr.deleted_at',
         );
       })
-      .where('c.id', '=', input.id)
+      .leftJoin('conversation_feedback AS cf', function () {
+        this.on('c.id', '=', 'cf.conversation_id').andOnNull('cf.deleted_at');
+      })
+      .where('c.id', '=', conversationId)
       .whereNull('c.deleted_at')
+      .groupBy(['c.id', 'c.title', 'c.status', 'cf.rating', 'cf.feedback'])
       .first();
   }
 
   getUserConversationMessages(
-    input: GetConversationRepositoryInput,
+    conversationId: number,
     context: ConversationsContext,
   ): Promise<ConversationMessageResponse[]> {
     return this.dataSource('conversation AS c')
@@ -152,13 +178,13 @@ export class ConversationsRepository {
           'cmr.deleted_at',
         );
       })
-      .where('c.id', '=', input.id)
+      .where('c.id', '=', conversationId)
       .where('c.user_id', '=', context.user.id)
       .whereNull('cmr.deleted_at');
   }
 
   async getNextMessage(
-    input: GetConversationRepositoryInput,
+    conversationId: number,
     context: ConversationsContext,
   ): Promise<ConversationMessage | undefined> {
     const message = await this.dataSource('conversation AS c')
@@ -176,7 +202,7 @@ export class ConversationsRepository {
         );
       })
       .whereNull('cmr.id')
-      .andWhere('c.id', '=', input.id)
+      .andWhere('c.id', '=', conversationId)
       .andWhere('c.user_id', '=', context.user.id)
       .whereNull('c.deleted_at')
       .first();

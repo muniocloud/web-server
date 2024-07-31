@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FILE_UPLOAD_GCS_PROVIDER } from './upload.contants';
 import { UploadProvider } from './upload.types';
-import { BasicData } from 'src/shared/shared.types';
+import { BasicData } from 'src/common/types';
 
 @Injectable()
 export class UploadService {

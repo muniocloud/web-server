@@ -1,52 +1,48 @@
-import { Injectable } from '@nestjs/common';
-import {
-  ConversationsContext,
-  CreateConversationInput,
-  FinishConversationInput,
-  GetConversationInput,
-  GetNextMessageInput,
-  HandleNextMessageInput,
-  HandleSendMessageInput,
-  SetupConversationInput,
-  SpeechAndSaveMessageInput,
-  UploadAndSaveMessageInput,
-} from './conversations.dtos';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AiService } from 'src/ai/ai.service';
 import { ConversationsRepository } from './conversations.repository';
-import {
-  conversationMessagesSchema,
-  generativeResponseFeedbackOverallSchemaValidator,
-  generativeResponseFeedbackSchemaValidator,
-} from './conversations.validators';
-import {
-  CONVERSATION_LEVEL,
-  CONVERSATION_STATUS,
-} from './conversations.constants';
 import { WsException } from '@nestjs/websockets';
 import { TTSService } from 'src/tts/tts.service';
 import { UploadService } from 'src/upload/upload.service';
 import { Socket } from 'socket.io';
+import { DURATION_LABEL, LEVEL_LABEL, STATUS } from 'src/common/enums';
+import {
+  CreateConversationInput,
+  HandleSendMessageInput,
+  SpeechAndSaveMessageInput,
+  UploadAndSaveMessageInput,
+} from './dtos/conversations.service.dtos';
+import { ConversationsContext } from './dtos/conversations.dtos';
+import {
+  conversationMessagesSchema,
+  generativeResponseFeedbackOverallSchemaValidator,
+  generativeResponseFeedbackSchemaValidator,
+} from './validators/generative-content.validators';
+import { WS_CONVERSATION_STATUS } from './enums/ws.enums';
+import { avgCalculator } from 'src/common/util/avg-calculator';
 
 @Injectable()
 export class ConversationsService {
   constructor(
-    private conversationsRepository: ConversationsRepository,
+    private readonly conversationsRepository: ConversationsRepository,
     private readonly aiService: AiService,
-    private ttsService: TTSService,
-    private uploadService: UploadService,
+    private readonly ttsService: TTSService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async createConversation(
     input: CreateConversationInput,
     context: ConversationsContext,
   ) {
-    const level = CONVERSATION_LEVEL[input.level];
+    const level = LEVEL_LABEL[input.level];
+    const duration = DURATION_LABEL[input.duration];
+
     const model = this.aiService.getConversationsGeneratorModel();
 
     const title = `Conversation about ${input.context} on level ${level}`;
 
     const messages = await this.aiService.generateContent(
-      [`Level: ${level}; Context: ${input.context}.`],
+      [`Level: ${level}; Context: ${input.context}; Duration: ${duration}.`],
       conversationMessagesSchema,
       model,
     );
@@ -56,18 +52,15 @@ export class ConversationsService {
         ...input,
         messages,
         title,
-        status: 'created',
+        status: STATUS.CREATED,
       },
       context,
     );
   }
 
-  async getConversation(
-    input: GetConversationInput,
-    context: ConversationsContext,
-  ) {
+  async getConversation(conversationId: number, context: ConversationsContext) {
     const conversation = await this.conversationsRepository.getConversation(
-      input,
+      conversationId,
       context,
     );
 
@@ -79,17 +72,19 @@ export class ConversationsService {
   }
 
   async getFullConversation(
-    input: GetConversationInput,
+    conversationId: number,
     context: ConversationsContext,
   ) {
     const conversation = await this.conversationsRepository.getFullConversation(
-      {
-        id: input.id,
-      },
+      conversationId,
       context,
     );
 
     if (!conversation) {
+      if (context.isController) {
+        throw new NotFoundException('Conversation not found');
+      }
+
       throw new WsException('Conversation not found');
     }
 
@@ -97,13 +92,11 @@ export class ConversationsService {
   }
 
   private async getNextMessage(
-    input: GetNextMessageInput,
+    conversationId: number,
     context: ConversationsContext,
   ) {
     const nextMessage = await this.conversationsRepository.getNextMessage(
-      {
-        id: input.conversationId,
-      },
+      conversationId,
       context,
     );
 
@@ -111,42 +104,32 @@ export class ConversationsService {
   }
 
   async handleSetupConversation(
-    input: SetupConversationInput,
+    conversationId: number,
     context: ConversationsContext,
   ) {
-    const conversation = await this.getConversation(
-      {
-        id: input.conversationId,
-      },
-      context,
-    );
+    const conversation = await this.getConversation(conversationId, context);
 
-    if (conversation.status === 'finished') {
+    if (conversation.status === STATUS.FINISHED) {
       context.socket?.disconnect(true);
       return;
     }
 
-    if (conversation.status === 'started') {
-      const nextMessage = await this.getNextMessage(input, context);
+    if (conversation.status === STATUS.CREATED) {
+      await this.conversationsRepository.updateConversation(
+        {
+          id: conversationId,
+          status: STATUS.STARTED,
+        },
+        context,
+      );
 
-      if (nextMessage?.isUser) {
-        context.socket?.emit('request-message', nextMessage);
-      }
-
-      return;
+      this.emitConversationStatus(
+        WS_CONVERSATION_STATUS.STARTED,
+        context.socket,
+      );
     }
 
-    await this.conversationsRepository.updateConversation(
-      {
-        id: input.conversationId,
-        status: 'started',
-      },
-      context,
-    );
-
-    this.emitConversationStatus(CONVERSATION_STATUS.STARTED, context.socket);
-
-    this.handleNextMessage(input, context);
+    return this.handleNextMessage(conversationId, context);
   }
 
   emitConversationStatus(status: number, socket?: Socket, ...extraData) {
@@ -154,19 +137,13 @@ export class ConversationsService {
   }
 
   async handleNextMessage(
-    input: HandleNextMessageInput,
+    conversationId: number,
     context: ConversationsContext,
   ) {
-    const nextMessage = await this.getNextMessage(input, context);
+    const nextMessage = await this.getNextMessage(conversationId, context);
 
     if (!nextMessage) {
-      this.finishConversation(
-        {
-          conversationId: input.conversationId,
-        },
-        context,
-      );
-      return;
+      return this.finishConversation(conversationId, context);
     }
 
     if (nextMessage.isUser) {
@@ -175,13 +152,13 @@ export class ConversationsService {
     }
 
     this.emitConversationStatus(
-      CONVERSATION_STATUS.PROCESSING_MESSAGE,
+      WS_CONVERSATION_STATUS.PROCESSING_MESSAGE,
       context.socket,
     );
 
     const audioUrl = await this.speechAndSaveMessage(
       {
-        conversationId: input.conversationId,
+        conversationId: conversationId,
         message: nextMessage,
       },
       context,
@@ -192,25 +169,27 @@ export class ConversationsService {
       audioUrl,
     });
 
-    this.handleNextMessage(input, context);
+    return this.handleNextMessage(conversationId, context);
   }
 
   async finishConversation(
-    input: FinishConversationInput,
+    conversationId: number,
     context: ConversationsContext,
   ) {
-    this.emitConversationStatus(CONVERSATION_STATUS.FINISHING, context.socket);
+    this.emitConversationStatus(
+      WS_CONVERSATION_STATUS.FINISHING,
+      context.socket,
+    );
+
     const feedbacksMessages =
       await this.conversationsRepository.getUserConversationMessages(
-        {
-          id: input.conversationId,
-        },
+        conversationId,
         context,
       );
 
     const model = this.aiService.getConversationAnalyserModel();
 
-    const data = await this.aiService.generateContent(
+    const feedback = await this.aiService.generateContent(
       [
         'Feedbacks:',
         ...feedbacksMessages.map(
@@ -221,32 +200,34 @@ export class ConversationsService {
       model,
     );
 
-    const avgRating = +(
-      feedbacksMessages.reduce((total, now) => now.rating + total, 0) /
-      feedbacksMessages.length
-    ).toFixed(2);
+    const rating = +avgCalculator(feedbacksMessages).toFixed(2);
 
-    await this.conversationsRepository.updateConversation(
+    const conversationFeedback = {
+      feedback,
+      rating,
+    };
+
+    await this.conversationsRepository.createConversationFeedback(
       {
-        id: input.conversationId,
-        status: 'finished',
-        feedback: data,
-        rating: avgRating,
+        conversationId: conversationId,
+        feedback,
+        rating,
       },
       context,
     );
 
-    const updatedFullConversation = await this.getFullConversation(
+    await this.conversationsRepository.updateConversation(
       {
-        id: input.conversationId,
+        id: conversationId,
+        status: STATUS.FINISHED,
       },
       context,
     );
 
     this.emitConversationStatus(
-      CONVERSATION_STATUS.FINISHED,
+      WS_CONVERSATION_STATUS.FINISHED,
       context.socket,
-      updatedFullConversation,
+      conversationFeedback,
     );
 
     context.socket?.disconnect();
@@ -257,26 +238,22 @@ export class ConversationsService {
     context: ConversationsContext,
   ) {
     this.emitConversationStatus(
-      CONVERSATION_STATUS.PROCESSING_MESSAGE,
+      WS_CONVERSATION_STATUS.PROCESSING_MESSAGE,
       context.socket,
     );
 
     const conversation = await this.getConversation(
-      {
-        id: input.conversationId,
-      },
+      input.conversationId,
       context,
     );
 
-    if (conversation.status !== 'started') {
+    if (conversation.status !== STATUS.STARTED) {
       context.socket?.disconnect();
       return;
     }
 
     const nextMessage = await this.getNextMessage(
-      {
-        conversationId: input.conversationId,
-      },
+      input.conversationId,
       context,
     );
 
@@ -317,12 +294,7 @@ export class ConversationsService {
       audioUrl,
     });
 
-    this.handleNextMessage(
-      {
-        conversationId: input.conversationId,
-      },
-      context,
-    );
+    return this.handleNextMessage(input.conversationId, context);
   }
 
   private async speechAndSaveMessage(

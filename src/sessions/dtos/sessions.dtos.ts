@@ -1,4 +1,7 @@
-import { createSessionSchemaInput, getLessonSchemaInput } from '../validator';
+import {
+  createSessionSchemaInput,
+  getLessonSchemaInput,
+} from '../validators/sessions.validators';
 import { z } from 'zod';
 import { User } from 'src/auth/type';
 
@@ -12,14 +15,6 @@ export type AnswerLessonInput = {
   sessionId: number;
 };
 
-export type CreateSessionResultInput = {
-  sessionId: number;
-};
-
 export type CreateSessionInput = z.infer<typeof createSessionSchemaInput>;
 
 export type GetLessonInput = z.infer<typeof getLessonSchemaInput>;
-
-export type GetUserSessionsInput = {
-  userId: number;
-};

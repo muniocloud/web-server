@@ -4,28 +4,23 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Lesson, LessonStatus, Session } from './type/sessions.type';
 import { SessionsRepository } from './sessions.repository';
-import { phrasesShema } from './validator/generative.validator';
-import { SESSION_LEVEL } from './sessions.constants';
 import { UploadService } from 'src/upload/upload.service';
+import { AiService } from 'src/ai/ai.service';
+import {
+  AnswerLessonInput,
+  CreateSessionInput,
+  GetLessonInput,
+  SessionsContext,
+} from './dtos/sessions.dtos';
+import { LEVEL_LABEL, STATUS } from 'src/common/enums';
 import {
   generativeResponseFeedbackOverallSchemaValidator,
   generativeResponseFeedbackSchemaValidator,
-} from './validator';
-import {
-  AnswerLessonInput,
-  CreateSessionResultInput,
-  CreateSessionInput,
-  GetLessonInput,
-  GetUserSessionsInput,
-  SessionsContext,
-} from './dto/sessions.service.dto';
-import { AiService } from 'src/ai/ai.service';
-import {
-  GetLessonsStatusInput,
-  GetSessionInput,
-} from './dto/sessions.repository.dto';
+  phrasesShema,
+} from './validators/sessions.validators';
+import { Lesson, LessonStatus, Session } from './types/sessions.types';
+import { avgCalculator } from 'src/common/util/avg-calculator';
 
 @Injectable()
 export class SessionsService {
@@ -35,8 +30,8 @@ export class SessionsService {
     private readonly aiService: AiService,
   ) {}
 
-  async createSession(input: CreateSessionInput, { user }: SessionsContext) {
-    const level = SESSION_LEVEL[input.level];
+  async createSession(input: CreateSessionInput, context: SessionsContext) {
+    const level = LEVEL_LABEL[input.level];
 
     const model = this.aiService.getLessonsGeneratorModel();
 
@@ -50,22 +45,21 @@ export class SessionsService {
       model,
     );
 
-    return this.sessionsRepository.createSession({
-      ...input,
-      userId: +user.id,
-      lessonsItems: phrases,
-      title,
-    });
+    return this.sessionsRepository.createSession(
+      {
+        ...input,
+        lessonsItems: phrases,
+        title,
+      },
+      context,
+    );
   }
 
   async getLesson(
     input: GetLessonInput,
-    { user }: SessionsContext,
+    context: SessionsContext,
   ): Promise<Lesson> {
-    const result = await this.sessionsRepository.getLesson({
-      ...input,
-      userId: user.id,
-    });
+    const result = await this.sessionsRepository.getLesson(input, context);
 
     if (result) {
       return result;
@@ -78,6 +72,8 @@ export class SessionsService {
     { sessionId, lessonId, audio }: AnswerLessonInput,
     context: SessionsContext,
   ) {
+    const session = await this.getSession(sessionId, context);
+
     const lesson = await this.getLesson(
       {
         lessonId,
@@ -99,17 +95,24 @@ export class SessionsService {
       model,
     );
 
-    await this.sessionsRepository.createLessonAnswer({
-      audioUrl: url,
-      lessonId,
-      rating: data.rating,
-      feedback: data.feedback,
-    });
+    await this.sessionsRepository.createLessonAnswer(
+      {
+        audioUrl: url,
+        lessonId,
+        rating: data.rating,
+        feedback: data.feedback,
+      },
+      context,
+    );
 
-    const nextLesson = await this.sessionsRepository.getNextLesson({
+    const nextLesson = await this.sessionsRepository.getNextLesson(
       sessionId,
-      userId: context.user.id,
-    });
+      context,
+    );
+
+    if (!nextLesson) {
+      await this.createSessionFeedback(session, context);
+    }
 
     return {
       rating: data.rating,
@@ -118,30 +121,29 @@ export class SessionsService {
     };
   }
 
-  async createOrGetSessionResult(
-    { sessionId }: CreateSessionResultInput,
-    { user }: SessionsContext,
-  ) {
-    const session = await this.sessionsRepository.getSession({
+  async getSession(sessionId: number, context: SessionsContext) {
+    const session = await this.sessionsRepository.getSession(
       sessionId,
-      userId: user.id,
-    });
+      context,
+    );
 
     if (!session) {
       throw new NotFoundException('Session not found.');
     }
 
-    if (session.status === 'finished') {
-      return {
-        feedback: session.feedback,
-        rating: session.rating,
-      };
-    }
+    return session;
+  }
 
-    const awnseredLessons = await this.sessionsRepository.getAnsweredLessons({
+  private async createSessionFeedback(
+    session: Session,
+    context: SessionsContext,
+  ) {
+    const { id: sessionId } = session;
+
+    const awnseredLessons = await this.sessionsRepository.getAnsweredLessons(
       sessionId,
-      userId: user.id,
-    });
+      context,
+    );
 
     if (session.lessons !== awnseredLessons?.length) {
       throw new HttpException(
@@ -152,7 +154,7 @@ export class SessionsService {
 
     const model = this.aiService.getSessionAnalyserModel();
 
-    const data = await this.aiService.generateContent(
+    const feedback = await this.aiService.generateContent(
       [
         'Feedbacks:',
         ...awnseredLessons.map(
@@ -163,47 +165,75 @@ export class SessionsService {
       model,
     );
 
-    const avgRating = +(
-      awnseredLessons.reduce((total, now) => now.rating + total, 0) /
-      awnseredLessons.length
-    ).toFixed(2);
+    const rating = +avgCalculator(awnseredLessons).toFixed(2);
 
-    await this.sessionsRepository.finishSession({
-      feedback: data,
-      rating: avgRating,
-      sessionId,
-      userId: user.id,
-    });
+    await this.sessionsRepository.updateSession(
+      {
+        sessionId: sessionId,
+        status: STATUS.FINISHED,
+      },
+      context,
+    );
 
-    return {
-      feedback: data,
-      rating: avgRating,
-    };
+    await this.sessionsRepository.createSessionFeedback(
+      {
+        feedback,
+        rating,
+        sessionId,
+      },
+      context,
+    );
+  }
+
+  async getSessionFeedback(sessionId: number, context: SessionsContext) {
+    const session = await this.getSession(sessionId, context);
+
+    if (session.status === STATUS.FINISHED) {
+      const sessionFeedback = await this.sessionsRepository.getSessionFeedback(
+        sessionId,
+        context,
+      );
+
+      if (!sessionFeedback) {
+        throw new HttpException(
+          'Something is wrong with this session. Sorry.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      return {
+        feedback: sessionFeedback.feedback,
+        rating: sessionFeedback.rating,
+      };
+    }
+
+    throw new NotFoundException();
   }
 
   async getUserSessions(
-    input: GetUserSessionsInput,
+    context: SessionsContext,
   ): Promise<Omit<Session, 'userId'>[]> {
-    const result = (await this.sessionsRepository.getUserSessions(input)) ?? [];
+    const result = await this.sessionsRepository.getUserSessions(context);
 
     return result.map((session) => ({
       ...session,
       userId: undefined,
-      level: SESSION_LEVEL[session.level],
+      level: LEVEL_LABEL[session.level],
     }));
   }
 
   async getUserSession(
-    input: GetSessionInput,
+    sessionId: number,
+    context: SessionsContext,
   ): Promise<Omit<Session, 'userId'>> {
-    const result = await this.sessionsRepository.getSession(input);
+    const result = await this.sessionsRepository.getSession(sessionId, context);
 
     if (result) {
       const { userId: _, ...rest } = result;
 
       return {
         ...rest,
-        level: SESSION_LEVEL[result.level],
+        level: LEVEL_LABEL[result.level],
       };
     }
 
@@ -211,9 +241,13 @@ export class SessionsService {
   }
 
   async getLessonsStatus(
-    input: GetLessonsStatusInput,
+    sessionId: number,
+    context: SessionsContext,
   ): Promise<LessonStatus[]> {
-    const result = await this.sessionsRepository.getLessonsStatus(input);
+    const result = await this.sessionsRepository.getLessonsStatus(
+      sessionId,
+      context,
+    );
 
     if (result?.length) {
       return result.map(({ id, answered }) => ({
