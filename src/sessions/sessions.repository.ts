@@ -60,6 +60,12 @@ export class SessionsRepository {
     _context: SessionsContext,
   ) {
     return this.dataSource.transaction(async function (transaction) {
+      await transaction('session_feedback')
+        .update({
+          deleted_at: transaction.fn.now(),
+        })
+        .where('conversation_id', '=', input.sessionId);
+
       const [feedbackId] = await transaction('session_feedback').insert(
         {
           feedback: input.feedback,

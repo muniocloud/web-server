@@ -26,7 +26,7 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable()
         .references('conversation.id');
       table.text('feedback').notNullable();
-      table.integer('rating').notNullable();
+      table.decimal('rating', 10, 2).notNullable();
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('deleted_at');
     })
@@ -55,7 +55,7 @@ export async function up(knex: Knex): Promise<void> {
         .references('conversation_message.id');
       table.string('audio_response_url', 2048).notNullable();
       table.text('feedback').notNullable();
-      table.integer('rating').notNullable();
+      table.decimal('rating', 10, 2).notNullable();
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('deleted_at');
     });
