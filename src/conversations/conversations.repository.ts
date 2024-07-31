@@ -53,9 +53,16 @@ export class ConversationsRepository {
     _context: ConversationsContext,
   ) {
     return this.dataSource.transaction(async (trx) => {
+      await trx('conversation_feedback')
+        .update({
+          deleted_at: this.dataSource.fn.now(),
+        })
+        .where('conversation_id', '=', input.conversationId);
+
       const [feedbackId] = await trx('conversation_feedback').insert(
         {
-          title: input.feedback,
+          feedback: input.feedback,
+          rating: input.rating,
           conversation_id: input.conversationId,
         },
         ['id'],
