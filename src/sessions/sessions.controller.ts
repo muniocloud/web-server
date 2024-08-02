@@ -48,35 +48,12 @@ export class SessionsController {
     return this.sessionsService.getUserSession(sessionId, { user });
   }
 
-  @Get(':session/lessons/status')
-  async getLessonsStatus(
+  @Post(':session/finish')
+  async finishSession(
     @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
     @JWTUser() user: User,
   ) {
-    return this.sessionsService.getLessonsStatus(sessionId, { user });
-  }
-
-  @Get(':session/result')
-  async getSessionResult(
-    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @JWTUser() user: User,
-  ) {
-    return this.sessionsService.getSessionFeedback(sessionId, { user });
-  }
-
-  @Get(':session/lessons/:lesson')
-  async getLesson(
-    @Param('session', new ZodValidatorPipe(idSchema)) sessionId: number,
-    @Param('lesson', new ZodValidatorPipe(idSchema)) lessonId: number,
-    @JWTUser() user: User,
-  ) {
-    return this.sessionsService.getLesson(
-      {
-        lessonId,
-        sessionId,
-      },
-      { user },
-    );
+    return this.sessionsService.finishSession(sessionId, { user });
   }
 
   @Post(':session/lessons/:lesson')

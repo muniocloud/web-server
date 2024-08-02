@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -19,7 +20,7 @@ import {
   generativeResponseFeedbackSchemaValidator,
   phrasesShema,
 } from './validators/sessions.validators';
-import { Lesson, LessonStatus, Session } from './types/sessions.types';
+import { Lesson, Session } from './types/sessions.types';
 import { avgRatingCalculator } from 'src/common/util/avg-rating-calculator';
 
 @Injectable()
@@ -35,7 +36,7 @@ export class SessionsService {
 
     const model = this.aiService.getLessonsGeneratorModel();
 
-    const title = `Session about ${input.context} on level ${input.level}`;
+    const title = `Session about ${input.context} on level ${level}`;
 
     const phrases = await this.aiService.generateContent(
       [
@@ -72,8 +73,6 @@ export class SessionsService {
     { sessionId, lessonId, audio }: AnswerLessonInput,
     context: SessionsContext,
   ) {
-    const session = await this.getSession(sessionId, context);
-
     const lesson = await this.getLesson(
       {
         lessonId,
@@ -87,10 +86,10 @@ export class SessionsService {
       `answer-lesson-${lesson.id}`,
     );
 
-    const model = this.aiService.getAnswerAnalyserModel();
+    const model = this.aiService.getAnswerAnalyserModel(lesson.phrase);
 
     const data = await this.aiService.generateContent(
-      [lesson.phrase, this.aiService.createFilePart(audio)],
+      [this.aiService.createFilePart(audio)],
       generativeResponseFeedbackSchemaValidator,
       model,
     );
@@ -109,10 +108,6 @@ export class SessionsService {
       sessionId,
       context,
     );
-
-    if (!nextLesson) {
-      await this.createSessionFeedback(session, context);
-    }
 
     return {
       rating: data.rating,
@@ -147,7 +142,7 @@ export class SessionsService {
 
     if (session.lessons !== awnseredLessons?.length) {
       throw new HttpException(
-        'There are some lessons to complete before get results.',
+        'Session not finished yet.',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -183,22 +178,22 @@ export class SessionsService {
       },
       context,
     );
+
+    return {
+      feedback,
+      rating,
+    };
   }
 
-  async getSessionFeedback(sessionId: number, context: SessionsContext) {
-    const session = await this.getSession(sessionId, context);
-
+  async getSessionFeedback(session: Session, context: SessionsContext) {
     if (session.status === STATUS.FINISHED) {
       const sessionFeedback = await this.sessionsRepository.getSessionFeedback(
-        sessionId,
+        session.id,
         context,
       );
 
       if (!sessionFeedback) {
-        throw new HttpException(
-          'Something is wrong with this session. Sorry.',
-          HttpStatus.BAD_REQUEST,
-        );
+        return null;
       }
 
       return {
@@ -207,7 +202,23 @@ export class SessionsService {
       };
     }
 
-    throw new NotFoundException();
+    return null;
+  }
+
+  async finishSession(sessionId: number, context: SessionsContext) {
+    const session = await this.getSession(sessionId, context);
+
+    if (session.status !== STATUS.STARTED) {
+      throw new BadRequestException('Session not started yet.');
+    }
+
+    const sessionFeedback = await this.getSessionFeedback(session, context);
+
+    if (sessionFeedback) {
+      return sessionFeedback;
+    }
+
+    return this.createSessionFeedback(session, context);
   }
 
   async getUserSessions(
@@ -226,7 +237,10 @@ export class SessionsService {
     sessionId: number,
     context: SessionsContext,
   ): Promise<Omit<Session, 'userId'>> {
-    const result = await this.sessionsRepository.getSession(sessionId, context);
+    const result = await this.sessionsRepository.getFullSession(
+      sessionId,
+      context,
+    );
 
     if (result) {
       const { userId: _, ...rest } = result;
@@ -235,25 +249,6 @@ export class SessionsService {
         ...rest,
         level: LEVEL_LABEL[result.level],
       };
-    }
-
-    throw new NotFoundException();
-  }
-
-  async getLessonsStatus(
-    sessionId: number,
-    context: SessionsContext,
-  ): Promise<LessonStatus[]> {
-    const result = await this.sessionsRepository.getLessonsStatus(
-      sessionId,
-      context,
-    );
-
-    if (result?.length) {
-      return result.map(({ id, answered }) => ({
-        id,
-        answered: !!answered,
-      }));
     }
 
     throw new NotFoundException();

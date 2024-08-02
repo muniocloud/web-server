@@ -12,7 +12,6 @@ import { STATUS } from 'src/common/enums';
 import {
   AwnseredLesson,
   Lesson,
-  LessonStatus,
   Session,
   SessionFeedback,
 } from './types/sessions.types';
@@ -64,7 +63,7 @@ export class SessionsRepository {
         .update({
           deleted_at: transaction.fn.now(),
         })
-        .where('conversation_id', '=', input.sessionId);
+        .where('session_id', '=', input.sessionId);
 
       const [feedbackId] = await transaction('session_feedback').insert(
         {
@@ -138,24 +137,52 @@ export class SessionsRepository {
       .first();
   }
 
-  async getLessonsStatus(
+  async getFullSession(
     sessionId: number,
     context: SessionsContext,
-  ): Promise<LessonStatus[] | null> {
-    return this.dataSource('session_lesson AS sl')
+  ): Promise<Session | null> {
+    return this.dataSource('session AS s')
       .select([
-        'sl.id AS id',
-        this.dataSource.raw('(slr.id IS NOT NULL) AS answered'),
+        's.id',
+        's.user_id AS userId',
+        's.title',
+        's.status',
+        's.context',
+        's.lessons',
+        's.level',
+        'sf.feedback',
+        'sf.rating',
+        this.dataSource.raw(`JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', sl.id,
+            'phrase', sl.phrase,
+          	'answered', slr.id IS NOT NULL
+        )
+    ) AS lessonsItens`),
       ])
-      .join('session AS s', function () {
-        this.on('s.id', '=', 'sl.session_id')
-          .andOnVal('s.user_id', '=', context.user.id)
-          .andOnNull('s.deleted_at');
+      .leftJoin('session_feedback AS sf', function () {
+        this.on('sf.session_id', '=', 's.id').andOnNull('sf.deleted_at');
+      })
+      .leftJoin('session_lesson AS sl', function () {
+        this.on('sl.session_id', '=', 's.id').andOnNull('sl.deleted_at');
       })
       .leftJoin('session_lesson_response AS slr', function () {
         this.on('slr.lesson_id', '=', 'sl.id').andOnNull('slr.deleted_at');
       })
-      .where('sl.session_id', '=', sessionId);
+      .where('s.id', '=', sessionId)
+      .where('s.user_id', '=', context.user.id)
+      .whereNull('s.deleted_at')
+      .groupBy([
+        's.id',
+        's.title',
+        's.status',
+        's.context',
+        's.lessons',
+        's.level',
+        'sf.feedback',
+        'sf.rating',
+      ])
+      .first();
   }
 
   async createLessonAnswer(

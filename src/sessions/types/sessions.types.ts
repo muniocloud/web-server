@@ -5,11 +5,6 @@ export type Lesson = {
   id: number;
 };
 
-export type LessonStatus = {
-  id: number;
-  answered: boolean;
-};
-
 export type Session = {
   userId: number;
   id: number;
@@ -17,6 +12,9 @@ export type Session = {
   lessons: number;
   level: number;
   context: string;
+  feedback: string | null;
+  rating: number | null;
+  lessonItens?: Lesson[];
 };
 
 export type SessionFeedback = {
