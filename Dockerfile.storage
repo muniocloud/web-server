@@ -1,5 +1,0 @@
-FROM fsouza/fake-gcs-server:1
-
-COPY examples/storage/ /data
-
-CMD [ "-scheme http" ]

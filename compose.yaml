@@ -1,6 +1,7 @@
 services:
   db:
     image: mysql:8.4.0
+    container_name: munio-db
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_USER: webserveruser
@@ -22,17 +23,14 @@ services:
       retries: 20
   
   storage:
-    build: 
-      context: .
-      dockerfile: Dockerfile.storage
     image: fsouza/fake-gcs-server:1
+    container_name: munio-storage
     command: -scheme http
     ports:
       - 4443:4443
     networks:
       - backend
     volumes:
-      - storage:/data
       - ${PWD}/examples/storage/:/data
     
 secrets:
@@ -43,7 +41,6 @@ secrets:
 
 volumes:
     db_data:
-    storage:
 
 networks:
   backend:

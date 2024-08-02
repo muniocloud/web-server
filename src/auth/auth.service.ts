@@ -4,10 +4,11 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { AuthUser, CreateUserAndAuthUserInput } from './type/authuser.type';
 import { JwtService } from '@nestjs/jwt';
-import { JWTUser } from './type';
+import { JWTPayload } from './type';
 import { AuthRepository } from './auth.repository';
 import { Knex } from 'knex';
 import { DATA_SOURCE_PROVIDER } from 'src/database/database.constants';
+import { IncomingMessage } from 'http';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
     private userService: UserService,
     private authRepository: AuthRepository,
     private readonly configService: ConfigService,
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
     @Inject(DATA_SOURCE_PROVIDER) private dataSource: Knex,
   ) {}
 
@@ -87,15 +88,24 @@ export class AuthService {
   }
 
   async createJWTToken(user: AuthUser) {
-    const payload: JWTUser = { email: user.email, id: user.userId };
+    // TODO Add refreshToken
+    const payload: JWTPayload = { email: user.email, id: user.userId };
 
     return {
       accessToken: this.jwtService.sign(payload),
     };
   }
 
-  async isValidJWTUser(jwtUser: JWTUser) {
-    const user = await this.getAuthUserByEmail(jwtUser.email);
-    return user?.userId === jwtUser.id;
+  async isValidJWTUser(jwtPayload: JWTPayload) {
+    const user = await this.getAuthUserByEmail(jwtPayload.email);
+    return user?.userId === jwtPayload.id;
+  }
+
+  async verifyJWTToken(plainJwt: string) {
+    return this.jwtService.verify(plainJwt);
+  }
+
+  getHTTPRequestPlainJWTToken(request: IncomingMessage) {
+    return request.headers.authorization;
   }
 }
