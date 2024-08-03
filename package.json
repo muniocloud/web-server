@@ -11,7 +11,7 @@
     "start": "env-cmd -f .env.development nest start",
     "start:dev": "env-cmd -f .env.development nest start --watch",
     "start:debug": "env-cmd -f .env.development nest start --debug --watch",
-    "start:prod": "env-cmd -f .env node dist/src/main",
+    "start:prod": "env-cmd -f .env.production node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -19,10 +19,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migration:up": "env-cmd -f .env.development knex migrate:latest",
-    "migration:up:prod": "env-cmd -f .env knex migrate:latest",
+    "migration:up:prod": "env-cmd -f .env.production knex migrate:latest",
     "migration:create": "env-cmd -f .env.development knex migrate:make",
     "migration:down": "env-cmd -f .env.development knex migrate:down",
-    "migration:down:prod": "env-cmd -f .env knex migrate:down"
+    "migration:down:prod": "env-cmd -f .env.production knex migrate:down"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.11.2",
