@@ -49,6 +49,9 @@ docker compose up
 
 ```bash
 npm run migration:up
+
+# production
+npm run migration:up:prod
 ```
 
 ## Running the app
