@@ -315,11 +315,10 @@ export class ConversationsService {
       context,
     );
 
-    const model = this.aiService.getAudioMessageAnalyserModel();
+    const model = this.aiService.getAnswerAnalyserModel(nextMessage.message);
 
     const data = await this.aiService.generateContent(
       [
-        nextMessage.message,
         this.aiService.createFilePart({
           buffer: input.audio,
           mimetype: input.mimetype,
