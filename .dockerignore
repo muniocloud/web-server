@@ -1,6 +1,5 @@
 node_modules/
 .vscode/
-dist/
 examples/
 test/
 .env.development

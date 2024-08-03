@@ -1,13 +1,12 @@
-runtime: nodejs20
-
+env: flex
+runtime: custom
 service: backend
 
-instance_class: F1
+manual_scaling:
+  instances: 1
 
-entrypoint: "npm run migration:up:prod && npm run start:prod"
-
-automatic_scaling:
-  max_instances: 1
+network:
+  session_affinity: true
 
 vpc_access_connector:
  name: projects/munio-2/locations/us-central1/connectors/internal-services-connect
