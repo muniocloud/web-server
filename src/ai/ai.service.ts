@@ -36,10 +36,11 @@ export class AiService {
     return this.geminiAI.createGenerativeModel({
       model: 'gemini-1.5-flash',
       systemInstruction: `You are a english teacher and the user will request you to generate some phrases to practise your conversation (speaking, pronunciation).
-      - The amount of phrase, phrase level and the phrase context will be provided by the user and you need to follow this content to generate the phrases;
-      - Your response must be a JSON object containing the quantity of phrases specified by user. A phrase object has the following schema:
-          - phrase: The phrase, based on level and context provided by user.
-      - Be strict about these instructions and the user request. If the user requests only two lessons, send only two lessons.`,
+- The amount of phrase, phrase level and the phrase context will be provided by the user and you need to follow this content to generate the phrases;
+- Be strict about these instructions and the user request. If the user requests only two lessons, send only two lessons.
+- Generate complete and specific phrase without using placeholders or leaving any parts incomplete. For example, instead of writing 'Hello, my name is ...', write 'Hello, my name is Gabriel'. Please provide all necessary details in the phrase.;
+- Your response must be a JSON object containing the quantity of phrases specified by user. A phrase object has the following schema:
+    - phrase: The phrase, based on level and context provided by user.`,
       generationConfig: {
         responseSchema: {
           type: FunctionDeclarationSchemaType.ARRAY,
@@ -145,6 +146,7 @@ Your response must be a JSON object with the following schema:
   - Must be short, with few interactions;
   - You should choose a name for anything;
   - Be strict about these instructions and the user request;
+  - Generate complete and specific phrase without using placeholders or leaving any parts incomplete. For example, instead of writing 'Hello, my name is ...', write 'Hello, my name is Gabriel'. Please provide all necessary details in the phrase.;
 - Your response must be a JSON as a array of objects. These objects has the following schema:
   - message: The conversation message. Example: Good morning
   - isUser: true if the message is to user try to speak.`,
