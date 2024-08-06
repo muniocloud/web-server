@@ -22,6 +22,7 @@ import {
 } from './validators/generative-content.validators';
 import { WS_CONVERSATION_STATUS } from './enums/ws.enums';
 import { avgRatingCalculator } from 'src/common/util/avg-rating-calculator';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ConversationsService {
@@ -30,6 +31,7 @@ export class ConversationsService {
     private readonly aiService: AiService,
     private readonly ttsService: TTSService,
     private readonly uploadService: UploadService,
+    private readonly userService: UserService,
   ) {}
 
   async createConversation(
@@ -212,6 +214,7 @@ export class ConversationsService {
     conversationId: number,
     context: ConversationsContext,
   ) {
+    const userName = await this.userService.getUserFirstName(context.user);
     this.emitConversationStatus(
       WS_CONVERSATION_STATUS.FINISHING,
       context.socket,
@@ -223,7 +226,7 @@ export class ConversationsService {
         context,
       );
 
-    const model = this.aiService.getConversationAnalyserModel();
+    const model = this.aiService.getConversationAnalyserModel(userName);
 
     const feedback = await this.aiService.generateContent(
       [

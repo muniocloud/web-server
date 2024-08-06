@@ -93,27 +93,29 @@ Your response must be a JSON object with the following schema:
     });
   }
 
-  getSessionAnalyserModel() {
+  getSessionAnalyserModel(userName: string) {
     return this.geminiAI.createGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: {
         responseMimeType: 'text/plain',
       },
       systemInstruction: `You are a english teacher and taught the user some speaking lessons. You send some feedbacks to the user.
-- Each messages bellow is your feedback about some phrase. Now, you need to send to the user a overall feedback.
+- The user name is ${userName}.
+- Each messages bellow is your feedback about some phrase. Now, you need to send to the user each feedback and a overall feedback.
 - Provide to the user ways to improve your speaking and pronunciation (conversation in general)
 - Point yours weakness and how to improve it.`,
     });
   }
 
-  getConversationAnalyserModel() {
+  getConversationAnalyserModel(userName: string) {
     return this.geminiAI.createGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: {
         responseMimeType: 'text/plain',
       },
       systemInstruction: `You are a english teacher and taught the user some speaking messages in a dialogue. You send some feedbacks to the user.
-- Each messages bellow is your feedback about some phrase. Now, you need to send to the user a overall feedback.
+- The user name is ${userName}.
+- Each messages bellow is your feedback about some phrase. Now, you need to send to the user each feedback and a overall feedback.
 - Provide to the user ways to improve your speaking and pronunciation (conversation in general)
 - Point yours weakness and how to improve it.`,
     });

@@ -22,13 +22,15 @@ import {
 } from './validators/sessions.validators';
 import { Lesson, Session } from './types/sessions.types';
 import { avgRatingCalculator } from 'src/common/util/avg-rating-calculator';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class SessionsService {
   constructor(
-    private sessionsRepository: SessionsRepository,
+    private readonly sessionsRepository: SessionsRepository,
     private readonly uploadService: UploadService,
     private readonly aiService: AiService,
+    private readonly userService: UserService,
   ) {}
 
   async createSession(input: CreateSessionInput, context: SessionsContext) {
@@ -147,7 +149,9 @@ export class SessionsService {
       );
     }
 
-    const model = this.aiService.getSessionAnalyserModel();
+    const userName = await this.userService.getUserFirstName(context.user);
+
+    const model = this.aiService.getSessionAnalyserModel(userName);
 
     const feedback = await this.aiService.generateContent(
       [

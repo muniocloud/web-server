@@ -36,4 +36,9 @@ export class UserService {
   async getUser(user: User) {
     return this.userRepository.getUser(user.id);
   }
+
+  async getUserFirstName(user: User) {
+    const userData = await this.getUser(user);
+    return userData?.name.split(' ')[0] ?? '';
+  }
 }
